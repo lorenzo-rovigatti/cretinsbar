@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(cretinsbar)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CRETINSBAR_VERSION 0)
 
 OPTION(G "Set to ON to compile with optimisations and debug symbols" OFF)
@@ -20,6 +21,7 @@ add_definitions(-DQT_MESSAGELOGCONTEXT -Wall -DCRETINSBAR_VERSION=${CRETINSBAR_V
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Boost 1.45.0 REQUIRED)
+find_package(SoundTouch)
 
 # The Qt5Widgets_INCLUDES also includes the include directories for dependencies QtCore and QtGui
 include_directories(${Qt5Widgets_INCLUDES})
@@ -36,6 +38,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 set(SOURCES
 	src/main.cpp
+	src/SoundUtils/SoundUtils.cpp
 )
 
 set(UI_SOURCES
@@ -51,4 +54,4 @@ qt5_add_resources(UI_GENERATED_RESOURCES ${UI_RESOURCES})
 
 add_executable(cretinsbar ${SOURCES} ${UI_GENERATED_HEADERS} ${UI_GENERATED_RESOURCES})
 
-target_link_libraries(cretinsbar ${QT5_LIBRARIES})
+target_link_libraries(cretinsbar ${QT5_LIBRARIES} ${SOUNDTOUCH_LIBRARIES})
