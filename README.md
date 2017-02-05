@@ -4,6 +4,7 @@
 cretinsbar requires cmake, qt5 and SoundTouch. On Ubuntu (or any Debian-derived distro, I believe) this boils down to installing
 * cmake
 * qtbase5-dev
+* qtmultimedia5-dev
 * libsoundtouch-dev
 
 Once all the dependencies are met, the code can be compiled as follows:

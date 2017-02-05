@@ -7,6 +7,9 @@
 
 #include <iostream>
 
+#include "CretinsBar.h"
+
+#include <QApplication>
 #include <QDebug>
 #include <QDateTime>
 #include <QFileInfo>
@@ -38,5 +41,10 @@ void message_handler(QtMsgType type, const QMessageLogContext &context, const QS
 }
 
 int main(int argc, char *argv[]) {
+	qInstallMessageHandler(message_handler);
+
+	cb::CretinsBar app(argc, argv);
+	return app.exec();
+
 	return 0;
 }

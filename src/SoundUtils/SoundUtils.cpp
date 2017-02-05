@@ -9,7 +9,6 @@
 
 namespace cb {
 
-
 // Sets the 'SoundTouch' object up according to parameters
 void SoundUtils::setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate) {
 	static int last_inSampleRate = -1;
@@ -46,7 +45,7 @@ void SoundUtils::setup(int inSampleRate, int inChannels, float tempoChange, int 
 #define BUFF_SIZE 16384
 
 // Processes the sound
-int SoundUtils::process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer* runningBuf) {
+int SoundUtils::process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer *runningBuf) {
 	int buffSizeSamples;
 
 	SAMPLETYPE* sampleBuffer = new SAMPLETYPE[BUFF_SIZE];
@@ -63,7 +62,7 @@ int SoundUtils::process(const float *samples, int nSamples, int nChannels, int s
 			nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
 			totSamples += nSamples;
 //            qDebug() << "proccessed " << nSamples;
-			runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples * sampleSizeBytes);
+			runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples *sampleSizeBytes);
 //            qDebug() << "runningBuf " << runningBuf->size();
 		} while(nSamples != 0);
 	}
@@ -72,7 +71,7 @@ int SoundUtils::process(const float *samples, int nSamples, int nChannels, int s
 	do {
 		nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
 		totSamples += nSamples;
-		runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples * sampleSizeBytes);
+		runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples *sampleSizeBytes);
 
 //        qDebug() << "runningBuf " << runningBuf->size();
 	} while(nSamples != 0);

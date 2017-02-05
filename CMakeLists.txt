@@ -19,8 +19,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_definitions(-DQT_MESSAGELOGCONTEXT -Wall -DCRETINSBAR_VERSION=${CRETINSBAR_VERSION}) 
 
 find_package(Qt5Widgets REQUIRED)
-find_package(Qt5PrintSupport REQUIRED)
-find_package(Boost 1.45.0 REQUIRED)
+find_package(Qt5Multimedia REQUIRED)
 find_package(SoundTouch)
 
 # The Qt5Widgets_INCLUDES also includes the include directories for dependencies QtCore and QtGui
@@ -32,17 +31,20 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/qcustomplot)
 # Boost's headers
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(QT5_LIBRARIES Qt5::Widgets Qt5::PrintSupport)
+set(QT5_LIBRARIES Qt5::Widgets Qt5::Multimedia)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 set(SOURCES
 	src/main.cpp
+	src/CretinsBar.cpp
 	src/SoundUtils/SoundUtils.cpp
+	src/Utilities/WavAnalyser.cpp
+	src/GUI/MainWindow.cpp
 )
 
 set(UI_SOURCES
-
+	src/GUI/MainWindow.ui
 )
 
 set(UI_RESOURCES
