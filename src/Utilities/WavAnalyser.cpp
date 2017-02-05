@@ -53,7 +53,7 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	char fileType[4];
 	qint32 fileSize;
 	char waveName[4];
-	char fmtName[3];
+	char fmtName[4];
 	qint32 fmtLength;
 	short fmtType;
 	short numberOfChannels;
@@ -71,7 +71,7 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	analyzeHeaderDS.readRawData(fileType, 4); // "RIFF"
 	analyzeHeaderDS >> fileSize; // File Size
 	analyzeHeaderDS.readRawData(waveName, 4); // "WAVE"
-	analyzeHeaderDS.readRawData(fmtName, 3); // "fmt"
+	analyzeHeaderDS.readRawData(fmtName, 4); // "fmt"
 	analyzeHeaderDS >> fmtLength; // Format length
 	analyzeHeaderDS >> fmtType; // Format type
 	analyzeHeaderDS >> numberOfChannels; // Number of channels
@@ -79,8 +79,6 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	analyzeHeaderDS >> sampleRateXBitsPerSampleXChanngelsDivEight; // (Sample Rate * BitsPerSample * Channels) / 8
 	analyzeHeaderDS >> bitsPerSampleXChannelsDivEightPointOne; // (BitsPerSample * Channels) / 8.1
 	analyzeHeaderDS >> bitsPerSample; // Bits per sample
-	analyzeHeaderDS.readRawData(dataHeader, 4); // "data" header
-	analyzeHeaderDS >> dataSize; // Data Size
 
 	// Print the header
 	qDebug() << "WAV File Header read:";
@@ -101,6 +99,7 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	QAudioFormat res;
 	res.setChannelCount(numberOfChannels);
 	res.setSampleRate(sampleRate);
+	res.setSampleSize(bitsPerSample);
 
 	return res;
 }

@@ -18,22 +18,6 @@ namespace cb {
 using namespace soundtouch;
 
 class SoundUtils {
-private:
-	soundtouch::SoundTouch pSoundTouch;
-
-	SoundUtils(SoundUtils const&) {
-	}
-	SoundUtils& operator=(SoundUtils const&);
-protected:
-
-	virtual ~SoundUtils() {
-
-	}
-
-	SoundUtils() {
-
-	}
-
 public:
 	static SoundUtils* Instance() {
 		static SoundUtils* m_pInstance;
@@ -60,7 +44,7 @@ public:
 	 * @param sampleSizeBytes the size of one sample in bytes
 	 * @param runningBuf the output buffer
 	 */
-	int process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer* runningBuf);
+	int process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer *runningBuf);
 
 	/**
 	 * trim the silence at the beginning and end
@@ -68,7 +52,25 @@ public:
 	 * @param numsamples the number of PCM samples
 	 * @param out the output buffer
 	 */
-	int trim(QBuffer* in, int numsamples, QBuffer* out);
+	int trim(QBuffer *in, int numsamples, QBuffer *out);
+
+private:
+	soundtouch::SoundTouch pSoundTouch;
+
+	SoundUtils(SoundUtils const&) {
+
+	}
+
+	SoundUtils& operator=(SoundUtils const&);
+protected:
+
+	virtual ~SoundUtils() {
+
+	}
+
+	SoundUtils() {
+
+	}
 };
 
 } /* namespace cb */

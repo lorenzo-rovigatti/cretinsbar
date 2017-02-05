@@ -13,12 +13,14 @@
 namespace cb {
 
 class WavAnalyser {
-private:
-	WavAnalyser();
-	virtual ~WavAnalyser();
-
 public:
 	static QAudioFormat format(QByteArray &);
+
+private:
+	WavAnalyser();
+
+protected:
+	virtual ~WavAnalyser();
 };
 
 } /* namespace cb */
