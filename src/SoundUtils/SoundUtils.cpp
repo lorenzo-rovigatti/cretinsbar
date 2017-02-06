@@ -73,7 +73,7 @@ void SoundUtils::process(WavInFile *in_file, QByteArray *runningBuf) {
 		// Read a chunk of samples from the input file
 		num = in_file->read(sampleBuffer, BUFF_SIZE);
 		nSamples = num / nChannels;
-		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
+//		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
 
 		// Feed the samples into SoundTouch processor
 		pSoundTouch.putSamples(sampleBuffer, nSamples);
@@ -91,7 +91,7 @@ void SoundUtils::process(WavInFile *in_file, QByteArray *runningBuf) {
 			for(int i = 0; i < nSamples*2; i++) {
 				sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
 			}
-			runningBuf->append(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
+			out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
 		} while(nSamples != 0);
 	}
 
@@ -103,7 +103,7 @@ void SoundUtils::process(WavInFile *in_file, QByteArray *runningBuf) {
 		for(int i = 0; i < nSamples*2; i++) {
 			sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
 		}
-		runningBuf->append(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
+		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
 	} while(nSamples != 0);
 }
 

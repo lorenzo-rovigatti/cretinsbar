@@ -23,4 +23,5 @@ If the compilation is successful, the cretinsbar executable will be placed in th
 
 ## Acknowledgements
 * The SoundUtils class is heavily based on what I have found [here](http://www.morethantechnical.com/2014/10/13/touch-your-sound-with-soundtouch-wcode/)
-* The FindSoundTouch.cmake file is from the [pcsx2](http://pcsx2.net/) project 
+* The FindSoundTouch.cmake file is from the [pcsx2](http://pcsx2.net/) project
+* The WavFile class is heavily based on the [SoundStretch](https://www.surina.net/soundtouch/soundstretch.html) utility

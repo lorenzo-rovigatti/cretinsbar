@@ -1,0 +1,47 @@
+/*
+ * Engine.h
+ *
+ *  Created on: 05 feb 2017
+ *      Author: lorenzo
+ */
+
+#ifndef SRC_ENGINE_H_
+#define SRC_ENGINE_H_
+
+#include <QObject>
+#include <QBuffer>
+#include <QByteArray>
+#include <QAudioDeviceInfo>
+#include <QAudioFormat>
+
+class QAudioOutput;
+class WavInFile;
+
+namespace cb {
+
+class Engine: public QObject {
+	Q_OBJECT;
+
+public:
+	Engine(QObject *parent);
+	virtual ~Engine();
+
+public slots:
+	void start_playback();
+
+private:
+	void initialise();
+	void reset();
+
+private:
+	QAudioDeviceInfo _audio_output_device;
+	QAudioOutput *_audio_output;
+	QAudioFormat _audio_format;
+    QBuffer _audio_output_IO_device;
+    WavInFile *_wav_file;
+    QByteArray _audio_data_original, _audio_data;
+};
+
+} /* namespace cb */
+
+#endif /* SRC_ENGINE_H_ */
