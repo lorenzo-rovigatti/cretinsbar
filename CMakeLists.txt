@@ -4,12 +4,20 @@ project(cretinsbar)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CRETINSBAR_VERSION 0)
 
-OPTION(G "Set to ON to compile with optimisations and debug symbols" OFF)
+option(G "Set to ON to compile with optimisations and debug symbols" OFF)
 
-IF(G)
-	SET(CMAKE_BUILD_TYPE RelWithDebInfo)
-	MESSAGE(STATUS "Compiling in Release+Debug symbols mode")
-ENDIF(G)
+if(G)
+	set(CMAKE_BUILD_TYPE RelWithDebInfo)
+	message(STATUS "Compiling in Release+Debug symbols mode")
+endif(G)
+
+if(CMAKE_VERSION VERSION_LESS "3.1")
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		set(CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
+	endif()
+else()
+	set(CMAKE_CXX_STANDARD 11)
+endif()
 
 # Tell CMake to run moc when necessary:
 set(CMAKE_AUTOMOC ON)
@@ -38,7 +46,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(SOURCES
 	src/main.cpp
 	src/CretinsBar.cpp
+	src/Engine.cpp
 	src/SoundUtils/SoundUtils.cpp
+	src/SoundUtils/WavFile.cpp
 	src/Utilities/WavAnalyser.cpp
 	src/GUI/MainWindow.cpp
 )

@@ -13,6 +13,9 @@
 
 #include <soundtouch/SoundTouch.h>
 
+class QByteArray;
+class WavInFile;
+
 namespace cb {
 
 using namespace soundtouch;
@@ -36,23 +39,7 @@ public:
 	 */
 	void setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate);
 
-	/**
-	 * process the samples according to the setup (change tempo and/or samples rate)
-	 * @param samples the samples to process S16_LE
-	 * @param nSamples the number of samples
-	 * @param nChannels the number of channels
-	 * @param sampleSizeBytes the size of one sample in bytes
-	 * @param runningBuf the output buffer
-	 */
-	int process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer *runningBuf);
-
-	/**
-	 * trim the silence at the beginning and end
-	 * @param in the incoming buffer
-	 * @param numsamples the number of PCM samples
-	 * @param out the output buffer
-	 */
-	int trim(QBuffer *in, int numsamples, QBuffer *out);
+	void process(WavInFile *in_file, QByteArray *runningBuf);
 
 private:
 	soundtouch::SoundTouch pSoundTouch;

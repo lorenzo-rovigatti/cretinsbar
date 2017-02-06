@@ -10,6 +10,7 @@
 #include <QDataStream>
 #include <QDebug>
 #include <QAudioFormat>
+#include <QtEndian>
 
 namespace cb {
 
@@ -50,10 +51,10 @@ WavAnalyser::~WavAnalyser() {
 QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	qDebug() << "The size of the WAV file is: " << wavFileContent.size();
 	// Define the header components
-	char fileType[4];
+	char fileType[5];
 	qint32 fileSize;
-	char waveName[4];
-	char fmtName[4];
+	char waveName[5];
+	char fmtName[5];
 	qint32 fmtLength;
 	short fmtType;
 	short numberOfChannels;
@@ -61,8 +62,9 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	qint32 sampleRateXBitsPerSampleXChanngelsDivEight;
 	short bitsPerSampleXChannelsDivEightPointOne;
 	short bitsPerSample;
-	char dataHeader[4];
-	qint32 dataSize;
+
+	// we read raw data which lacks the end-of-string character, so we need to set it ourselves
+	fileType[4] = waveName[4] = fmtName[4] = '\0';
 
 	// Create a data stream to analyze the data
 	QDataStream analyzeHeaderDS(&wavFileContent, QIODevice::ReadOnly);
@@ -93,8 +95,42 @@ QAudioFormat WavAnalyser::format(QByteArray &wavFileContent) {
 	qDebug() << "Sample Rate * Bits/Sample * Channels / 8: " << sampleRateXBitsPerSampleXChanngelsDivEight;
 	qDebug() << "Bits per Sample * Channels / 8.1: " << bitsPerSampleXChannelsDivEightPointOne;
 	qDebug() << "Bits per Sample: " << bitsPerSample;
-	qDebug() << "Data Header: " << QString::fromUtf8(dataHeader);
-	qDebug() << "Data Size: " << dataSize;
+
+	// Look for the data chunk
+	quint32 chunkDataSize = 0;
+	QByteArray temp_buff;
+	char buff[0x04];
+	char my_buff[5];
+	my_buff[4] = '\0';
+	while(true) {
+		analyzeHeaderDS.readRawData(my_buff, 4);
+		temp_buff.append(my_buff);
+		int idx = temp_buff.indexOf("data");
+		if(idx >= 0) {
+			int lenOfData = temp_buff.length() - (idx + 4);
+			memcpy(buff, temp_buff.constData() + idx + 4, lenOfData);
+			int bytesToRead = 4 - lenOfData;
+			// finish reading size of chunk
+			if(bytesToRead > 0) {
+				int read = analyzeHeaderDS.readRawData(buff + lenOfData, bytesToRead);
+				if(bytesToRead != read) {
+					qDebug() << "Error: Something awful happens!";
+				}
+			}
+			chunkDataSize = qFromLittleEndian<quint32>((const uchar*) buff);
+			break;
+		}
+		if(temp_buff.length() >= 8) {
+			temp_buff.remove(0, 0x04);
+		}
+	}
+
+	if(!chunkDataSize) {
+		qDebug() << "Error: Chunk data not found!";
+	}
+
+	qDebug() << "Subchunk2size: " << chunkDataSize;
+	qDebug() << "NumSamples: " << 8*chunkDataSize/numberOfChannels/bitsPerSample;
 
 	QAudioFormat res;
 	res.setChannelCount(numberOfChannels);

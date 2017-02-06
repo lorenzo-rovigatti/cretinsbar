@@ -7,6 +7,11 @@
 
 #include "SoundUtils.h"
 
+#include "WavFile.h"
+
+#include <QByteArray>
+#include <QDataStream>
+
 namespace cb {
 
 // Sets the 'SoundTouch' object up according to parameters
@@ -19,6 +24,7 @@ void SoundUtils::setup(int inSampleRate, int inChannels, float tempoChange, int 
 	if(inSampleRate == last_inSampleRate && inChannels == last_inChannels && tempoChange == last_tempChange && outSampleRate == last_outSampleRate) {
 		return; //parameters are the same - no need to 'setup' again
 	}
+
 	last_inSampleRate = inSampleRate;
 	last_inChannels = inChannels;
 	last_tempChange = tempoChange;
@@ -28,76 +34,77 @@ void SoundUtils::setup(int inSampleRate, int inChannels, float tempoChange, int 
 	pSoundTouch.setChannels(inChannels);
 
 	pSoundTouch.setTempoChange(tempoChange);
-
-	if(inSampleRate != outSampleRate)
-		pSoundTouch.setRate((float) inSampleRate / (float) outSampleRate);
+	pSoundTouch.setPitchSemiTones(0);
 
 	pSoundTouch.setSetting(SETTING_USE_QUICKSEEK, 1);
-
-	{
-		// use settings for speech processing
-		pSoundTouch.setSetting(SETTING_SEQUENCE_MS, 40);
-		pSoundTouch.setSetting(SETTING_SEEKWINDOW_MS, 15);
-		pSoundTouch.setSetting(SETTING_OVERLAP_MS, 8);
-	}
 }
 
-#define BUFF_SIZE 16384
+/// Convert from float to integer and saturate
+inline int my_saturate(float fvalue, float minval, float maxval) {
+	if(fvalue > maxval) {
+		fvalue = maxval;
+	}
+	else if(fvalue < minval) {
+		fvalue = minval;
+	}
+	return (int) fvalue;
+}
 
-// Processes the sound
-int SoundUtils::process(const float *samples, int nSamples, int nChannels, int sampleSizeBytes, QBuffer *runningBuf) {
-	int buffSizeSamples;
 
-	SAMPLETYPE* sampleBuffer = new SAMPLETYPE[BUFF_SIZE];
+#define BUFF_SIZE 6720
+void SoundUtils::process(WavInFile *in_file, QByteArray *runningBuf) {
+	runningBuf->clear();
 
+	int nSamples;
+	float sampleBuffer[BUFF_SIZE];
+	int sampleIntBuffer[BUFF_SIZE];
+
+	if((in_file == NULL) || (runningBuf == NULL)) return;  // nothing to do.
+
+	int nChannels = (int) in_file->getNumChannels();
 	assert(nChannels > 0);
-	buffSizeSamples = BUFF_SIZE / nChannels;
-	int totSamples;
+	int buffSizeSamples = BUFF_SIZE / nChannels;
 
-	// Process samples
-	{
-		pSoundTouch.putSamples(samples, nSamples);
+	QDataStream out_buff(runningBuf, QIODevice::WriteOnly);
+	// Process samples read from the input file
+	while(in_file->eof() == 0) {
+		int num;
 
+		// Read a chunk of samples from the input file
+		num = in_file->read(sampleBuffer, BUFF_SIZE);
+		nSamples = num / nChannels;
+		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
+
+		// Feed the samples into SoundTouch processor
+		pSoundTouch.putSamples(sampleBuffer, nSamples);
+
+		// Read ready samples from SoundTouch processor & write them output file.
+		// NOTES:
+		// - 'receiveSamples' doesn't necessarily return any samples at all
+		//   during some rounds!
+		// - On the other hand, during some round 'receiveSamples' may have more
+		//   ready samples than would fit into 'sampleBuffer', and for this reason
+		//   the 'receiveSamples' call is iterated for as many times as it
+		//   outputs samples.
 		do {
 			nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-			totSamples += nSamples;
-//            qDebug() << "proccessed " << nSamples;
-			runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples *sampleSizeBytes);
-//            qDebug() << "runningBuf " << runningBuf->size();
+			for(int i = 0; i < nSamples*2; i++) {
+				sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
+			}
+			runningBuf->append(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
 		} while(nSamples != 0);
 	}
 
+	// Now the input file is processed, yet 'flush' few last samples that are
+	// hiding in the SoundTouch's internal processing pipeline.
 	pSoundTouch.flush();
 	do {
 		nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-		totSamples += nSamples;
-		runningBuf->write(reinterpret_cast<char*>(sampleBuffer), nSamples *sampleSizeBytes);
-
-//        qDebug() << "runningBuf " << runningBuf->size();
+		for(int i = 0; i < nSamples*2; i++) {
+			sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
+		}
+		runningBuf->append(reinterpret_cast<const char *>(sampleIntBuffer), in_file->getBytesPerSample()*nSamples);
 	} while(nSamples != 0);
-
-	delete sampleBuffer;
-
-//    qDebug() << "done processing";
-
-	return totSamples;
-}
-
-int SoundUtils::trim(QBuffer* in, int numsamples, QBuffer* out) {
-	int i = 0;
-	in->open(QIODevice::ReadOnly);
-	const short* pBuf = reinterpret_cast<const short*>(in->data().data());
-	for(i = 0; i < numsamples && abs(pBuf[i]) <= 10; ++i)
-		;    // qDebug() << pBuf[i];
-	qDebug() << "start silence " << i;
-	int start_silence = i;
-	for(i = numsamples - 1; i >= 0 && abs(pBuf[i]) <= 10; --i)
-		;    // qDebug() << pBuf[i];
-	qDebug() << "end silence " << i;
-	int end_silence = i;
-	out->open(QIODevice::WriteOnly);
-	out->write(in->data().mid(start_silence * sizeof(short), (end_silence - start_silence) * sizeof(short)));
-	return end_silence - start_silence;
 }
 
 } /* namespace cb */

@@ -23,8 +23,6 @@ public:
 	MainWindow(QWidget *parent = 0);
 	virtual ~MainWindow();
 
-	void play();
-
 private:
 	Ui::MainWindow *_ui;
 };

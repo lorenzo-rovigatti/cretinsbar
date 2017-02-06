@@ -8,11 +8,12 @@
 #ifndef SRC_CRETINSBAR_H_
 #define SRC_CRETINSBAR_H_
 
-#include <qapplication.h>
+#include <QApplication>
 
 namespace cb {
 
 class MainWindow;
+class Engine;
 
 class CretinsBar: public QApplication {
 public:
@@ -21,6 +22,7 @@ public:
 
 private:
 	MainWindow *_window;
+	Engine *_engine;
 };
 
 } /* namespace cb */

@@ -6,18 +6,21 @@
  */
 
 #include "CretinsBar.h"
+#include "Engine.h"
 #include "GUI/MainWindow.h"
 
 namespace cb {
 
-CretinsBar::CretinsBar(int &argc, char **argv): QApplication(argc, argv) {
+CretinsBar::CretinsBar(int &argc, char **argv)
+	: QApplication(argc, argv)
+	, _window(new MainWindow())
+	, _engine(new Engine(this)) {
 	setOrganizationName("CretinsBar");
 	setApplicationName("CretinsBar");
 	setApplicationVersion("alpha");
 
-	_window = new cb::MainWindow();
 	_window->show();
-	_window->play();
+	_engine->start_playback();
 }
 
 CretinsBar::~CretinsBar() {
