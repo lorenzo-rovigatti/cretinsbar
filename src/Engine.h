@@ -8,14 +8,16 @@
 #ifndef SRC_ENGINE_H_
 #define SRC_ENGINE_H_
 
+#include <memory>
+
 #include <QObject>
 #include <QBuffer>
 #include <QByteArray>
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>
+#include "SoundUtils/WavFile.h"
 
 class QAudioOutput;
-class WavInFile;
 
 namespace cb {
 
@@ -38,7 +40,7 @@ private:
 	QAudioOutput *_audio_output;
 	QAudioFormat _audio_format;
     QBuffer _audio_output_IO_device;
-    WavInFile *_wav_file;
+    std::unique_ptr<WavInFile> _wav_file;
     QByteArray _audio_data_original, _audio_data;
 };
 

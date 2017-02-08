@@ -54,17 +54,18 @@
 
 #include <QFile>
 #include <QDebug>
+#include <QString>
 
 #include "WavFile.h"
 #include <soundtouch/STTypes.h>
 
 using namespace std;
 
-static const char riffStr[] = "RIFF";
-static const char waveStr[] = "WAVE";
-static const char fmtStr[] = "fmt ";
-static const char factStr[] = "fact";
-static const char dataStr[] = "data";
+static const QByteArray riffStr("RIFF");
+static const QByteArray waveStr("WAVE");
+static const QByteArray fmtStr("fmt ");
+static const QByteArray factStr("fact");
+static const QByteArray dataStr("data");
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -185,27 +186,24 @@ void WavInFile::rewind() {
 
 int WavInFile::checkCharTags() const {
 	// header.format.fmt should equal to 'fmt '
-	if(memcmp(fmtStr, header.format.fmt, 4) != 0)
-		return -1;
+	if(fmtStr != header.format.fmt) return -1;
 	// header.data.data_field should equal to 'data'
-	if(memcmp(dataStr, header.data.data_field, 4) != 0)
-		return -1;
+	if(dataStr != header.data.data_field)	return -1;
 
 	return 0;
 }
 
 void WavInFile::load() {
 	_data = _data_file.read(header.data.data_len);
+	if((uint)_data.size() != (uint)header.data.data_len) ST_THROW_RT_ERROR("The actual size of the wav file is different from what it should be according to its header.");
 	float *float_data = reinterpret_cast<float *>(_data.data());
-	int bytesPerSample = header.format.bits_per_sample/8;
-	int n_samples = _data.size()/bytesPerSample;
 
 	// swap byte ordert & convert to float, depending on sample format
-	switch(bytesPerSample) {
+	switch(bytesPerSample()) {
 	case 1: {
 		unsigned char *temp2 = reinterpret_cast<unsigned char *>(_data.data());
 		double conv = 1.0 / 128.0;
-		for(int i = 0; i < n_samples; i++) {
+		for(uint i = 0; i < numSamples(); i++) {
 			float_data[i] = (float) (temp2[i] * conv - 1.0);
 		}
 		break;
@@ -214,7 +212,7 @@ void WavInFile::load() {
 	case 2: {
 		short *temp2 = reinterpret_cast<short *>(_data.data());
 		double conv = 1.0 / 32768.0;
-		for(int i = 0; i < n_samples; i++) {
+		for(uint i = 0; i < numSamples(); i++) {
 			short value = temp2[i];
 			float_data[i] = (float) (_swap16(value) * conv);
 		}
@@ -224,7 +222,7 @@ void WavInFile::load() {
 	case 3: {
 		char *temp2 = reinterpret_cast<char *>(_data.data());
 		double conv = 1.0 / 8388608.0;
-		for(int i = 0; i < n_samples; i++) {
+		for(uint i = 0; i < numSamples(); i++) {
 			int value = *((int*) temp2);
 			value = _swap32(value) & 0x00ffffff;             // take 24 bits
 			value |= (value & 0x00800000) ? 0xff000000 : 0;  // extend minus sign bits
@@ -238,7 +236,7 @@ void WavInFile::load() {
 		int *temp2 = reinterpret_cast<int *>(_data.data());
 		double conv = 1.0 / 2147483648.0;
 		assert(sizeof(int) == 4);
-		for(int i = 0; i < n_samples; i++) {
+		for(uint i = 0; i < numSamples(); i++) {
 			int value = temp2[i];
 			float_data[i] = (float) (_swap32(value) * conv);
 		}
@@ -252,9 +250,8 @@ void WavInFile::load() {
 int WavInFile::read(float *buffer, int maxElems) {
 	int numElems = maxElems;
 	float *float_data = reinterpret_cast<float *>(_data.data());
-	int bytesPerSample = header.format.bits_per_sample/8;
 
-	if((bytesPerSample < 1) || (bytesPerSample > 4)) {
+	if((bytesPerSample() < 1) || (bytesPerSample() > 4)) {
 		stringstream ss;
 		ss << "\nOnly 8/16/24/32 bit sample WAV files supported. Can't open WAV file with ";
 		ss << (int) header.format.bits_per_sample;
@@ -262,11 +259,11 @@ int WavInFile::read(float *buffer, int maxElems) {
 		ST_THROW_RT_ERROR(ss.str().c_str());
 	}
 
-	int n_samples = _data.size()/bytesPerSample;
-	int curr_sample = dataRead/bytesPerSample;
+	int n_samples = _data.size()/bytesPerSample();
+	int curr_sample = dataRead/bytesPerSample();
 	if((curr_sample + maxElems) > n_samples) numElems = n_samples - curr_sample;
 	for(int i = 0; i < numElems; i++) buffer[i] = float_data[curr_sample + i];
-	dataRead += numElems*bytesPerSample;
+	dataRead += numElems*bytesPerSample();
 
 	return numElems;
 }
@@ -297,36 +294,38 @@ static int isAlphaStr(const char *str) {
 }
 
 int WavInFile::readRIFFBlock() {
-	if(_data_file.read((char *)&(header.riff), sizeof(WavRiff)) != sizeof(WavRiff)) return -1;
+	header.riff.riff = _data_file.read(4);
+
+	QByteArray temp_len = _data_file.read(4);
+	memcpy(&header.riff.package_len, temp_len.constData(), 4);
+	header.riff.wave = _data_file.read(4);
 
 	// swap 32bit data byte order if necessary
 	_swap32((int &) header.riff.package_len);
 
-	// header.riff.riff_char should equal to 'RIFF');
-	if(memcmp(riffStr, header.riff.riff_char, 4) != 0) return -1;
+	// header.riff.riff should equal to 'RIFF');
+	if(riffStr != header.riff.riff) return -1;
 	// header.riff.wave should equal to 'WAVE'
-	if(memcmp(waveStr, header.riff.wave, 4) != 0) return -1;
+	if(waveStr != header.riff.wave) return -1;
 
 	return 0;
 }
 
 int WavInFile::readHeaderBlock() {
-	char label[5];
 	string sLabel;
 
 	// lead label string
-	if(_data_file.read(label, 4) != 4) return -1;
-	label[4] = 0;
+	QByteArray label = _data_file.read(4);
+	if(label.size() != 4) return -1;
 
-	if(isAlphaStr(label) == 0)
-		return -1;    // not a valid label
+	if(isAlphaStr(label) == 0) return -1;    // not a valid label
 
 	// Decode blocks according to their label
-	if(strcmp(label, fmtStr) == 0) {
+	if(label == fmtStr) {
 		int nLen, nDump;
 
 		// 'fmt ' block
-		memcpy(header.format.fmt, fmtStr, 4);
+		header.format.fmt = fmtStr;
 
 		// read length of the format field
 		if(_data_file.read((char *) &nLen, sizeof(int)) != sizeof(int)) return -1;
@@ -350,7 +349,7 @@ int WavInFile::readHeaderBlock() {
 		_swap16(header.format.channel_number);   // short int channel_number;
 		_swap32((int &) header.format.sample_rate);      // int sample_rate;
 		_swap32((int &) header.format.byte_rate);        // int byte_rate;
-		_swap16(header.format.byte_per_sample);  // short int byte_per_sample;
+		_swap16(header.format.bytes_per_sample);  // short int byte_per_sample;
 		_swap16(header.format.bits_per_sample);  // short int bits_per_sample;
 
 		// if format_len is larger than expected, skip the extra data
@@ -358,11 +357,11 @@ int WavInFile::readHeaderBlock() {
 
 		return 0;
 	}
-	else if(strcmp(label, factStr) == 0) {
+	else if(label == factStr) {
 		int nLen, nDump;
 
 		// 'fact' block
-		memcpy(header.fact.fact_field, factStr, 4);
+		header.fact.fact_field = factStr;
 
 		// read length of the fact field
 		if(_data_file.read((char *) &nLen, sizeof(int)) != sizeof(int)) return -1;
@@ -389,9 +388,9 @@ int WavInFile::readHeaderBlock() {
 
 		return 0;
 	}
-	else if(strcmp(label, dataStr) == 0) {
+	else if(label == dataStr) {
 		// 'data' block
-		memcpy(header.data.data_field, dataStr, 4);
+		header.data.data_field = dataStr;
 		if(_data_file.read((char *) &(header.data.data_len), sizeof(uint)) != sizeof(uint)) return -1;
 
 		// swap byte order if necessary
@@ -418,8 +417,6 @@ int WavInFile::readHeaderBlock() {
 int WavInFile::readWavHeaders() {
 	int res;
 
-	memset(&header, 0, sizeof(header));
-
 	res = readRIFFBlock();
 	if(res)
 		return 1;
@@ -434,54 +431,64 @@ int WavInFile::readWavHeaders() {
 	return checkCharTags();
 }
 
-uint WavInFile::getNumChannels() const {
+uint WavInFile::numChannels() const {
 	return header.format.channel_number;
 }
 
-uint WavInFile::getNumBits() const {
+uint WavInFile::numBits() const {
 	return header.format.bits_per_sample;
 }
 
-uint WavInFile::getBytesPerSample() const {
-	return getNumChannels() * getNumBits() / 8;
+uint WavInFile::bytesPerSample() const {
+	return numBits()/8;
 }
 
-uint WavInFile::getSampleRate() const {
+uint WavInFile::bytesPerSampleTimesNumChannels() const {
+	return bytesPerSample()*numChannels();
+}
+
+uint WavInFile::sampleRate() const {
 	return header.format.sample_rate;
 }
 
-uint WavInFile::getDataSizeInBytes() const {
+uint WavInFile::dataSizeInBytes() const {
 	return header.data.data_len;
 }
 
-uint WavInFile::getNumSamples() const {
-	if(header.format.byte_per_sample == 0)
-		return 0;
-	if(header.format.fixed > 1)
-		return header.fact.fact_sample_len;
-	return header.data.data_len / (unsigned short) header.format.byte_per_sample;
+uint WavInFile::numSamples() const {
+	if(header.format.bytes_per_sample == 0) return 0;
+	if(header.format.fixed > 1) return 2*header.fact.fact_sample_len;
+	return header.data.data_len/(unsigned short) bytesPerSample();
 }
 
-uint WavInFile::getLengthMS() const {
-	double numSamples;
-	double sampleRate;
+uint WavInFile::numSamplesPerChannel() const {
+	return numSamples()/numChannels();
+}
 
-	numSamples = (double) getNumSamples();
-	sampleRate = (double) getSampleRate();
+uint WavInFile::length_in_ms() const {
+	return (uint) (1000.0*numSamplesPerChannel()/sampleRate() + 0.5);
+}
 
-	return (uint) (1000.0 * numSamples / sampleRate + 0.5);
+QAudioFormat WavInFile::format() const {
+	QAudioFormat frmt;
+	frmt.setChannelCount(numChannels());
+	frmt.setSampleRate(sampleRate());
+	frmt.setSampleSize(numBits());
+	frmt.setCodec("audio/pcm");
+	frmt.setSampleType(QAudioFormat::Float);
+	return frmt;
 }
 
 /// Returns how many milliseconds of audio have so far been read from the file
 uint WavInFile::getElapsedMS() const {
-	return (uint) (1000.0 * (double) dataRead / (double) header.format.byte_rate);
+	return (uint) (1000.0*(double) dataRead/(double) header.format.byte_rate);
 }
 
 void WavInFile::finishHeader() {
 	// supplement the file length into the header structure
 	header.riff.package_len = bytesWritten + sizeof(WavHeader) - sizeof(WavRiff) + 4;
 	header.data.data_len = bytesWritten;
-	header.fact.fact_sample_len = bytesWritten / header.format.byte_per_sample;
+	header.fact.fact_sample_len = bytesWritten / header.format.bytes_per_sample;
 
 	writeHeader();
 }
@@ -498,7 +505,7 @@ void WavInFile::writeHeader() {
 	_swap16((short &) hdrTemp.format.channel_number);
 	_swap32((int &) hdrTemp.format.sample_rate);
 	_swap32((int &) hdrTemp.format.byte_rate);
-	_swap16((short &) hdrTemp.format.byte_per_sample);
+	_swap16((short &) hdrTemp.format.bytes_per_sample);
 	_swap16((short &) hdrTemp.format.bits_per_sample);
 	_swap32((int &) hdrTemp.data.data_len);
 	_swap32((int &) hdrTemp.fact.fact_len);

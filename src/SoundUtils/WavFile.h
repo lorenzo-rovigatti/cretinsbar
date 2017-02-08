@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <QByteArray>
 #include <QFile>
+#include <QAudioFormat>
 
 #ifndef uint
 typedef unsigned int uint;
@@ -57,33 +58,33 @@ typedef unsigned int uint;
 
 /// WAV audio file 'riff' section header
 typedef struct {
-	char riff_char[4];
+	QByteArray riff;
 	int package_len;
-	char wave[4];
+	QByteArray wave;
 } WavRiff;
 
 /// WAV audio file 'format' section header
 typedef struct {
-	char fmt[4];
+	QByteArray fmt;
 	int format_len;
 	short fixed;
 	short channel_number;
 	int sample_rate;
 	int byte_rate;
-	short byte_per_sample;
+	short bytes_per_sample;
 	short bits_per_sample;
 } WavFormat;
 
 /// WAV audio file 'fact' section header
 typedef struct {
-	char fact_field[4];
+	QByteArray fact_field;
 	int fact_len;
 	uint fact_sample_len;
 } WavFact;
 
 /// WAV audio file 'data' section header
 typedef struct {
-	char data_field[4];
+	QByteArray data_field;
 	uint data_len;
 } WavData;
 
@@ -153,26 +154,34 @@ public:
 	void rewind();
 
 	/// Get sample rate.
-	uint getSampleRate() const;
+	uint sampleRate() const;
 
 	/// Get number of bits per sample, i.e. 8 or 16.
-	uint getNumBits() const;
+	uint numBits() const;
 
 	/// Get sample data size in bytes. Ahem, this should return same information as
 	/// 'getBytesPerSample'...
-	uint getDataSizeInBytes() const;
+	uint dataSizeInBytes() const;
 
-	/// Get total number of samples in file.
-	uint getNumSamples() const;
+	/// Get the total number of samples in file.
+	uint numSamples() const;
 
-	/// Get number of bytes per audio sample (e.g. 16bit stereo = 4 bytes/sample)
-	uint getBytesPerSample() const;
+	/// Get the total number of samples per channel in file.
+	uint numSamplesPerChannel() const;
+
+	/// Get the number of bytes per audio sample (e.g. 16bit stereo = 4 bytes/sample)
+	uint bytesPerSample() const;
+
+	/// Get the number of bytes per audio sample (e.g. 16bit stereo = 4 bytes/sample) times the number of channels
+	uint bytesPerSampleTimesNumChannels() const;
 
 	/// Get number of audio channels in the file (1=mono, 2=stereo)
-	uint getNumChannels() const;
+	uint numChannels() const;
 
 	/// Get the audio file length in milliseconds
-	uint getLengthMS() const;
+	uint length_in_ms() const;
+
+	QAudioFormat format() const;
 
 	/// Returns how many milliseconds of audio have so far been read from the file
 	///

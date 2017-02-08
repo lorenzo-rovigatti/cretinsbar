@@ -39,7 +39,7 @@ public:
 	 */
 	void setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate);
 
-	void process(WavInFile *in_file, QByteArray *runningBuf);
+	void process(WavInFile &in_file, QByteArray *runningBuf);
 
 private:
 	soundtouch::SoundTouch pSoundTouch;
