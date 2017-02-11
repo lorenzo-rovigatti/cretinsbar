@@ -27,26 +27,18 @@ Engine::~Engine() {
 }
 
 void Engine::start_playback() {
-	 SoundUtils::Instance()->setup(_audio_format.sampleRate(), _audio_format.channelCount(), 0., _audio_format.sampleRate());
-	 SoundUtils::Instance()->process(*_wav_file, &_audio_data);
-	 qDebug() << _audio_data.size() << 4*_wav_file->numSamples() << _wav_file->length_in_ms();
+	 SoundUtils::Instance()->setup(_audio_format.sampleRate(), _audio_format.channelCount(), 30., _audio_format.sampleRate());
+	 _out_file = SoundUtils::Instance()->process(*_wav_file);
+
+	 qDebug() << _wav_file->data()->size() << _out_file->data()->size();
 
 	_audio_output_IO_device.close();
-	_audio_output_IO_device.setBuffer(&_audio_data);
+	_audio_output_IO_device.setBuffer(_out_file->data());
 	_audio_output_IO_device.open(QIODevice::ReadOnly);
 	_audio_output->start(&_audio_output_IO_device);
 }
 
 void Engine::initialise() {
-//    QFile input("/home/lorenzo/nothing.wav");
-//    input.open(QIODevice::ReadOnly);
-//    _audio_data_original = input.readAll();
-//    _audio_format = WavAnalyser::format(_audio_data_original);
-//    _audio_format.setCodec("audio/pcm");
-//	_audio_format.setSampleType(QAudioFormat::Float);
-//
-//	_audio_data = _audio_data_original;
-
 	_wav_file = std::unique_ptr<WavInFile>(new WavInFile("/home/lorenzo/nothing.wav"));
 	_audio_format = _wav_file->format();
 	_audio_output = new QAudioOutput(_audio_output_device, _audio_format, this);

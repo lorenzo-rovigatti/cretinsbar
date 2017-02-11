@@ -52,18 +52,16 @@ inline int my_saturate(float fvalue, float minval, float maxval) {
 
 
 #define BUFF_SIZE 6720
-void SoundUtils::process(WavInFile &in_file, QByteArray *runningBuf) {
-	runningBuf->clear();
-
+std::unique_ptr<WavInFile> SoundUtils::process(WavInFile &in_file) {
 	int nSamples;
 	float sampleBuffer[BUFF_SIZE];
 	int sampleIntBuffer[BUFF_SIZE];
 
-	int nChannels = (int) in_file.numChannels();
+	int nChannels = (int) in_file.num_channels();
 	assert(nChannels > 0);
 	int buffSizeSamples = BUFF_SIZE / nChannels;
 
-	QDataStream out_buff(runningBuf, QIODevice::WriteOnly);
+	std::unique_ptr<WavInFile> out(new WavInFile(in_file.header()));
 	// Process samples read from the input file
 	while(in_file.eof() == 0) {
 		int num;
@@ -71,7 +69,6 @@ void SoundUtils::process(WavInFile &in_file, QByteArray *runningBuf) {
 		// Read a chunk of samples from the input file
 		num = in_file.read(sampleBuffer, BUFF_SIZE);
 		nSamples = num / nChannels;
-//		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file.getBytesPerSample()*nSamples);
 
 		// Feed the samples into SoundTouch processor
 		pSoundTouch.putSamples(sampleBuffer, nSamples);
@@ -86,10 +83,7 @@ void SoundUtils::process(WavInFile &in_file, QByteArray *runningBuf) {
 		//   outputs samples.
 		do {
 			nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-			for(int i = 0; i < nSamples*2; i++) {
-				sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
-			}
-			out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file.bytesPerSampleTimesNumChannels()*nSamples);
+			out->write(sampleBuffer, 2*nSamples);
 		} while(nSamples != 0);
 	}
 
@@ -98,11 +92,10 @@ void SoundUtils::process(WavInFile &in_file, QByteArray *runningBuf) {
 	pSoundTouch.flush();
 	do {
 		nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-		for(int i = 0; i < nSamples*2; i++) {
-			sampleIntBuffer[i] = my_saturate(sampleBuffer[i]*2147483648.0f, -2147483648.0f, 2147483647.0f);
-		}
-		out_buff.writeRawData(reinterpret_cast<const char *>(sampleIntBuffer), in_file.bytesPerSampleTimesNumChannels()*nSamples);
+		out->write(sampleBuffer, nSamples);
 	} while(nSamples != 0);
+
+	return out;
 }
 
 } /* namespace cb */

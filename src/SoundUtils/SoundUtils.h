@@ -8,6 +8,8 @@
 #ifndef SRC_SOUNDUTILS_SOUNDUTILS_H_
 #define SRC_SOUNDUTILS_SOUNDUTILS_H_
 
+#include <memory>
+
 #include <QDebug>
 #include <QBuffer>
 
@@ -39,7 +41,7 @@ public:
 	 */
 	void setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate);
 
-	void process(WavInFile &in_file, QByteArray *runningBuf);
+	std::unique_ptr<WavInFile> process(WavInFile &in_file);
 
 private:
 	soundtouch::SoundTouch pSoundTouch;

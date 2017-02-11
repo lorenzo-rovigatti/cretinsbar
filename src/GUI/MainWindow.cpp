@@ -9,7 +9,6 @@
 #include "ui_MainWindow.h"
 
 #include "../SoundUtils/SoundUtils.h"
-#include "../Utilities/WavAnalyser.h"
 
 namespace cb {
 

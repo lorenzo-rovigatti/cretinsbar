@@ -47,10 +47,13 @@
 #ifndef WAVFILE_H
 #define WAVFILE_H
 
+#include <memory>
+
 #include <stdio.h>
 #include <QByteArray>
 #include <QFile>
 #include <QAudioFormat>
+#include <QDataStream>
 
 #ifndef uint
 typedef unsigned int uint;
@@ -101,51 +104,54 @@ class WavInFile {
 private:
 	QFile _data_file;
 	QByteArray _data;
+	std::unique_ptr<QDataStream> _data_stream;
 
 	FILE *fptr;
 
+	/// WAV header information
+	WavHeader _header;
+
 	/// Position within the audio stream
-	long position;
+	long _position;
 
 	/// Counter of how many bytes of sample data have been read from the file.
-	long dataRead;
-
-	/// WAV header information
-	WavHeader header;
+	long _curr_sample;
 
 	/// Counter of how many bytes have been written to the file so far.
-	int bytesWritten;
+	int _bytes_written;
 
 	/// Init the WAV file stream
 	void init();
 
-	void load();
-
 	/// Read WAV file headers.
 	/// \return zero if all ok, nonzero if file format is invalid.
-	int readWavHeaders();
+	int _read_wav_headers();
 
 	/// Checks WAV file header tags.
 	/// \return zero if all ok, nonzero if file format is invalid.
-	int checkCharTags() const;
+	int _check_string_tags() const;
 
 	/// Reads a single WAV file header block.
 	/// \return zero if all ok, nonzero if file format is invalid.
-	int readHeaderBlock();
+	int _read_header_block();
 
 	/// Reads WAV file 'riff' block
-	int readRIFFBlock();
+	int _read_RIFF_block();
 
 	/// Finishes the WAV file header by supplementing information of amount of
 	/// data written to file etc
-	void finishHeader();
+	void _finish_header();
 
 	/// Writes the WAV file header.
-	void writeHeader();
+	void _write_header();
+
+	void _prepare_to_write_data();
 public:
 	/// Constructor: Opens the given WAV file. If the file can't be opened,
 	/// throws 'runtime_error' exception.
 	WavInFile(const char *filename);
+
+	WavInFile(WavHeader &&header);
 
 	/// Destructor: Closes the file.
 	~WavInFile();
@@ -153,30 +159,34 @@ public:
 	/// Rewind to beginning of the file
 	void rewind();
 
+	QByteArray *data();
+
+	WavHeader header() const;
+
 	/// Get sample rate.
-	uint sampleRate() const;
+	uint sample_rate() const;
 
 	/// Get number of bits per sample, i.e. 8 or 16.
-	uint numBits() const;
+	uint num_bits() const;
 
 	/// Get sample data size in bytes. Ahem, this should return same information as
 	/// 'getBytesPerSample'...
-	uint dataSizeInBytes() const;
+	uint data_size_in_bytes() const;
 
 	/// Get the total number of samples in file.
-	uint numSamples() const;
+	uint num_samples() const;
 
 	/// Get the total number of samples per channel in file.
-	uint numSamplesPerChannel() const;
+	uint num_samples_per_channel() const;
 
 	/// Get the number of bytes per audio sample (e.g. 16bit stereo = 4 bytes/sample)
-	uint bytesPerSample() const;
+	uint bytes_per_sample() const;
 
 	/// Get the number of bytes per audio sample (e.g. 16bit stereo = 4 bytes/sample) times the number of channels
-	uint bytesPerSampleTimesNumChannels() const;
+	uint bytes_per_sample_times_num_channels() const;
 
 	/// Get number of audio channels in the file (1=mono, 2=stereo)
-	uint numChannels() const;
+	uint num_channels() const;
 
 	/// Get the audio file length in milliseconds
 	uint length_in_ms() const;
@@ -186,7 +196,7 @@ public:
 	/// Returns how many milliseconds of audio have so far been read from the file
 	///
 	/// \return elapsed duration in milliseconds
-	uint getElapsedMS() const;
+	uint elapes_in_ms() const;
 
 	/// Reads audio samples from the WAV file to floating point format, converting
 	/// sample values to range [-1,1[. Reads given number of elements from the file
@@ -208,6 +218,8 @@ public:
 	void write(const float *buffer,     ///< Pointer to sample data buffer.
 			int numElems             ///< How many array items are to be written to file.
 			);
+
+	void done_writing_data();
 };
 
 #endif

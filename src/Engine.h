@@ -40,8 +40,7 @@ private:
 	QAudioOutput *_audio_output;
 	QAudioFormat _audio_format;
     QBuffer _audio_output_IO_device;
-    std::unique_ptr<WavInFile> _wav_file;
-    QByteArray _audio_data_original, _audio_data;
+    std::unique_ptr<WavInFile> _wav_file, _out_file;
 };
 
 } /* namespace cb */

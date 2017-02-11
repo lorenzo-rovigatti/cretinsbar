@@ -49,7 +49,6 @@ set(SOURCES
 	src/Engine.cpp
 	src/SoundUtils/SoundUtils.cpp
 	src/SoundUtils/WavFile.cpp
-	src/Utilities/WavAnalyser.cpp
 	src/GUI/MainWindow.cpp
 )
 
