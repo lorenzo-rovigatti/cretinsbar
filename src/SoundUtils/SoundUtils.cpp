@@ -12,6 +12,7 @@
 
 #include <QByteArray>
 #include <QDataStream>
+#include <QAudioFormat>
 
 namespace cb {
 
@@ -24,7 +25,18 @@ SoundUtils::~SoundUtils() {
 
 }
 
-#define N_SAMPLES 1000
+qint64 SoundUtils::audio_length(QAudioFormat &format, qint64 microseconds) {
+	qint64 result = (format.sampleRate()*format.channelCount()*(format.sampleSize()/8))*microseconds/1000000;
+	result -= result % (format.channelCount()*format.sampleSize());
+	return result;
+}
+
+qreal SoundUtils::pcmToReal(QAudioFormat &format, int pcm) {
+	qreal max_amplitude = pow(2., format.sampleSize() - 1.);
+	return qreal(pcm)/max_amplitude;
+}
+
+#define N_SAMPLES 1024
 std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int pitch_change) {
 	int nChannels = (int) in_file.get_channels();
 

@@ -14,16 +14,24 @@ namespace Ui {
 class MainWindow;
 }
 
+class QAudioFormat;
+
 namespace cb {
+
+class Engine;
 
 class MainWindow: public QMainWindow {
 Q_OBJECT
 
 public:
-	MainWindow(QWidget *parent = 0);
+	MainWindow(Engine *engine, QWidget *parent = 0);
 	virtual ~MainWindow();
 
+public slots:
+	void format_changed(const QAudioFormat &new_format);
+
 private:
+	Engine *_engine;
 	Ui::MainWindow *_ui;
 };
 

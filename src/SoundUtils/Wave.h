@@ -1,27 +1,12 @@
 /*
-
- WAV file appender.
-
- Copyright (C) 2015 Sergey Kolevatov
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
-
+ * Wave.h
+ *
+ *  Created on: 12 feb 2017
+ *      Author: lorenzo
  */
 
-// $Revision: 3173 $ $Date:: 2016-01-13 #$ $Author: serge $
-#ifndef LIB_WAVE_WAVE_H
-#define LIB_WAVE_WAVE_H
+#ifndef SRC_SOUNDUTILS_WAVE_H
+#define SRC_SOUNDUTILS_WAVE_H
 
 #include <QAudioFormat>
 #include <QByteArray>
@@ -66,7 +51,7 @@ public:
 	void append_samples(const QByteArray &samples_l, const QByteArray &samples_r);
 	void append_samples(const char* samples_l, const char* samples_r, int size);
 
-	void save(const std::string & filename);
+	void save(const QString &filename);
 
 	struct RIFF {
 		char riffID[4];     //4
@@ -119,14 +104,14 @@ private:
 	RIFF _riff;
 	FMTHDR _fmthdr;
 	FMT _fmt;
-	std::vector<char> fmt_extra_bytes_;
+	std::vector<char> _fmt_extra_bytes;
 	FACT _fact;
 	DATA _data;
-	int16_t extra_param_length_;
-	std::vector<char> extra_param_;
+	int16_t _extra_param_length;
+	std::vector<char> _extra_param;
 
 };
 
-} // namespace wave
+} // namespace cb
 
-#endif // LIB_WAVE_WAVE_H
+#endif // SRC_SOUNDUTILS_WAVE_H

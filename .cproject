@@ -28,6 +28,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtCore"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtMultimedia"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtWidgets"/>
+									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtGui"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1421135259" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -81,6 +82,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.45459871" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtCore"/>
+									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtGui"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtWidgets"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtMultimedia"/>
 								</option>

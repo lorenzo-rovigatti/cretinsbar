@@ -21,8 +21,8 @@ public:
 	virtual ~CretinsBar();
 
 private:
-	MainWindow *_window;
 	Engine *_engine;
+	MainWindow *_window;
 };
 
 } /* namespace cb */

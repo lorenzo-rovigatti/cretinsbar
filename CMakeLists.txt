@@ -34,7 +34,7 @@ find_package(SoundTouch)
 include_directories(${Qt5Widgets_INCLUDES})
 
 # This allows ui_MainWindow.h to find qcustomplot.h
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/qcustomplot)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/GUI)
 
 # Boost's headers
 include_directories(${Boost_INCLUDE_DIRS})
@@ -51,6 +51,7 @@ set(SOURCES
 	src/SoundUtils/WavFile.cpp
 	src/SoundUtils/Wave.cpp
 	src/GUI/MainWindow.cpp
+	src/GUI/Waveform.cpp
 )
 
 set(UI_SOURCES

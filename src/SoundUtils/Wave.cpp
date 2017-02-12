@@ -32,7 +32,7 @@ using namespace cb;
 
 Wave::Wave(const std::string & filename) throw (std::exception) {
 	_fmt.wFormatTag = 0;
-	extra_param_length_ = 0;
+	_extra_param_length = 0;
 	_fact.samplesNumber = -1;
 
 	QFile file(filename.c_str());
@@ -49,9 +49,9 @@ Wave::Wave(const std::string & filename) throw (std::exception) {
 	unsigned fmt_extra_bytes = _fmthdr.fmtSIZE - FMT_SIZE;
 
 	if(fmt_extra_bytes > 0) {
-		fmt_extra_bytes_.resize(fmt_extra_bytes);
+		_fmt_extra_bytes.resize(fmt_extra_bytes);
 
-		file.read(&fmt_extra_bytes_[0], fmt_extra_bytes);
+		file.read(&_fmt_extra_bytes[0], fmt_extra_bytes);
 	}
 
 	if(_fmt.wFormatTag != 1) {
@@ -81,7 +81,7 @@ Wave::Wave(const std::string & filename) throw (std::exception) {
 }
 
 Wave::Wave() {
-	extra_param_length_ = 0;
+	_extra_param_length = 0;
 	_fmt.wFormatTag = 0;
 	_fact.samplesNumber = -1;
 }
@@ -104,7 +104,7 @@ Wave::Wave(int16_t nChannels, int32_t nSamplesPerSec, int16_t wBitsPerSample) th
 	_fmt.nBlockAlign = nChannels * bytes;
 	_fmt.wBitsPerSample = wBitsPerSample;
 
-	extra_param_length_ = 0;
+	_extra_param_length = 0;
 	_fact.samplesNumber = -1;
 
 	memcpy(_data.dataID, "data", 4);
@@ -130,15 +130,15 @@ Wave Wave::operator+(const Wave &w) const throw (std::exception) {
 	Wave res;
 	res._fmthdr = w._fmthdr;
 	res._fmt = w._fmt;
-	res.fmt_extra_bytes_ = w.fmt_extra_bytes_;
+	res._fmt_extra_bytes = w._fmt_extra_bytes;
 
 	res._riff = w._riff;
 	res._data = w._data;
 	res._data.dataSIZE = _data.dataSIZE + w._data.dataSIZE;
 
-	res.extra_param_length_ = w.extra_param_length_;
-	if(w.extra_param_length_) {
-		res.extra_param_ = w.extra_param_;
+	res._extra_param_length = w._extra_param_length;
+	if(w._extra_param_length) {
+		res._extra_param = w._extra_param;
 	}
 
 	res._wave = _wave;
@@ -180,14 +180,14 @@ Wave& Wave::operator+=(const Wave &w) throw (std::exception) {
 void Wave::_init(const Wave& w) {
 	_fmthdr = w._fmthdr;
 	_fmt = w._fmt;
-	fmt_extra_bytes_ = w.fmt_extra_bytes_;
+	_fmt_extra_bytes = w._fmt_extra_bytes;
 	_riff = w._riff;
 	_data = w._data;
 	_fact = w._fact;
 
-	extra_param_length_ = w.extra_param_length_;
-	if(w.extra_param_length_) {
-		extra_param_ = w.extra_param_;
+	_extra_param_length = w._extra_param_length;
+	if(w._extra_param_length) {
+		_extra_param = w._extra_param;
 	}
 	_wave = w._wave;
 }
@@ -238,7 +238,8 @@ QAudioFormat Wave::format() const {
 	frmt.setSampleRate(get_samples_per_sec());
 	frmt.setSampleSize(get_bits_per_sample());
 	frmt.setCodec("audio/pcm");
-	frmt.setSampleType(QAudioFormat::SignedInt);
+	if(get_bytes_per_sample() == 1) frmt.setSampleType(QAudioFormat::UnSignedInt);
+	else frmt.setSampleType(QAudioFormat::SignedInt);
 	return frmt;
 }
 
@@ -351,19 +352,20 @@ void Wave::append_samples(const char* samples_l, const char* samples_r, int size
 	_update_riff_size();
 }
 
-void Wave::save(const std::string & filename) {
-	std::ofstream file(filename.c_str(), std::ios_base::binary | std::ios_base::out);
+void Wave::save(const QString &filename) {
+	QFile file(filename);
+	file.open(QIODevice::WriteOnly);
 
 	file.write(reinterpret_cast<char*>(&_riff), RIFF_SIZE);
 	file.write(reinterpret_cast<char*>(&_fmthdr), FMTHDR_SIZE);
 
 	file.write(reinterpret_cast<char*>(&_fmt), FMT_SIZE);
-	file.write(&fmt_extra_bytes_[0], fmt_extra_bytes_.size());
+	file.write(&_fmt_extra_bytes[0], _fmt_extra_bytes.size());
 
 	if(_fmt.wFormatTag > 1) {
-		file.write(reinterpret_cast<char*>(&extra_param_length_), 2);
-		if(extra_param_length_ > 0)
-			file.write(&extra_param_[0], extra_param_length_);
+		file.write(reinterpret_cast<char*>(&_extra_param_length), 2);
+		if(_extra_param_length > 0)
+			file.write(&_extra_param[0], _extra_param_length);
 	}
 	if(_fact.samplesNumber > -1) {
 		file.write(const_cast<char*>("fact"), 4);

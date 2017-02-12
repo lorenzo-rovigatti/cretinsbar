@@ -15,6 +15,7 @@
 
 #include <soundtouch/SoundTouch.h>
 
+class QAudioFormat;
 class QByteArray;
 class WavInFile;
 
@@ -32,6 +33,9 @@ public:
 		assert(m_pInstance != NULL);
 		return m_pInstance;
 	}
+
+	static qint64 audio_length(QAudioFormat &format, qint64 microseconds);
+	static qreal pcmToReal(QAudioFormat &format, int pcm);
 
 	std::unique_ptr<Wave> process(Wave &in_file, float tempo_change, int pitch_change);
 
