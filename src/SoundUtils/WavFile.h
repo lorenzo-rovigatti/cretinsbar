@@ -103,7 +103,7 @@ typedef struct {
 class WavInFile {
 private:
 	QFile _data_file;
-	QByteArray _data;
+	QByteArray _data, _data_float;
 	std::unique_ptr<QDataStream> _data_stream;
 
 	FILE *fptr;
@@ -140,7 +140,7 @@ private:
 
 	/// Finishes the WAV file header by supplementing information of amount of
 	/// data written to file etc
-	void _finish_header();
+	void _update_header();
 
 	/// Writes the WAV file header.
 	void _write_header();
@@ -160,6 +160,7 @@ public:
 	void rewind();
 
 	QByteArray *data();
+	QByteArray data_as_int();
 
 	WavHeader header() const;
 
@@ -216,7 +217,7 @@ public:
 	/// Write data to WAV file in floating point format, saturating sample values to range
 	/// [-1..+1[. Throws a 'runtime_error' exception if writing to file fails.
 	void write(const float *buffer,     ///< Pointer to sample data buffer.
-			int numElems             ///< How many array items are to be written to file.
+			int num_samples             ///< Number of sample
 			);
 
 	void done_writing_data();

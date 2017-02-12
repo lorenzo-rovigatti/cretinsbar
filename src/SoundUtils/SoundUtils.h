@@ -20,6 +20,7 @@ class WavInFile;
 
 namespace cb {
 
+class Wave;
 using namespace soundtouch;
 
 class SoundUtils {
@@ -32,34 +33,17 @@ public:
 		return m_pInstance;
 	}
 
-	/**
-	 * setup SoundTouch to change tempo and/or sample rate
-	 * @param inSampleRate the incoming sample rate
-	 * @param inChannels the number of channels
-	 * @param tempChange the tempo change in percent
-	 * @param outSampleRate the desired output sample rate
-	 */
-	void setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate);
-
-	std::unique_ptr<WavInFile> process(WavInFile &in_file);
+	std::unique_ptr<Wave> process(Wave &in_file, float tempo_change, int pitch_change);
 
 private:
 	soundtouch::SoundTouch pSoundTouch;
 
-	SoundUtils(SoundUtils const&) {
+	SoundUtils();
 
-	}
+	SoundUtils(SoundUtils const&) = delete;
+	SoundUtils& operator=(SoundUtils const&) = delete;
 
-	SoundUtils& operator=(SoundUtils const&);
-protected:
-
-	virtual ~SoundUtils() {
-
-	}
-
-	SoundUtils() {
-
-	}
+	virtual ~SoundUtils();
 };
 
 } /* namespace cb */

@@ -15,7 +15,7 @@
 #include <QByteArray>
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>
-#include "SoundUtils/WavFile.h"
+#include "SoundUtils/Wave.h"
 
 class QAudioOutput;
 
@@ -40,7 +40,8 @@ private:
 	QAudioOutput *_audio_output;
 	QAudioFormat _audio_format;
     QBuffer _audio_output_IO_device;
-    std::unique_ptr<WavInFile> _wav_file, _out_file;
+    std::unique_ptr<Wave> _wav_file, _out_file;
+    QByteArray _data;
 };
 
 } /* namespace cb */

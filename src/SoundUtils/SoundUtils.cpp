@@ -8,70 +8,47 @@
 #include "SoundUtils.h"
 
 #include "WavFile.h"
+#include "Wave.h"
 
 #include <QByteArray>
 #include <QDataStream>
 
 namespace cb {
 
-// Sets the 'SoundTouch' object up according to parameters
-void SoundUtils::setup(int inSampleRate, int inChannels, float tempoChange, int outSampleRate) {
-	static int last_inSampleRate = -1;
-	static int last_inChannels = -1;
-	static int last_tempChange = 0.0f;
-	static int last_outSampleRate = -1;
-
-	if(inSampleRate == last_inSampleRate && inChannels == last_inChannels && tempoChange == last_tempChange && outSampleRate == last_outSampleRate) {
-		return; //parameters are the same - no need to 'setup' again
-	}
-
-	last_inSampleRate = inSampleRate;
-	last_inChannels = inChannels;
-	last_tempChange = tempoChange;
-	last_outSampleRate = outSampleRate;
-
-	pSoundTouch.setSampleRate(inSampleRate);
-	pSoundTouch.setChannels(inChannels);
-
-	pSoundTouch.setTempoChange(tempoChange);
-	pSoundTouch.setPitchSemiTones(0);
-
+SoundUtils::SoundUtils() {
 	pSoundTouch.setSetting(SETTING_USE_QUICKSEEK, 1);
+	pSoundTouch.setSetting(SETTING_USE_AA_FILTER, 1);
 }
 
-/// Convert from float to integer and saturate
-inline int my_saturate(float fvalue, float minval, float maxval) {
-	if(fvalue > maxval) {
-		fvalue = maxval;
-	}
-	else if(fvalue < minval) {
-		fvalue = minval;
-	}
-	return (int) fvalue;
+SoundUtils::~SoundUtils() {
+
 }
 
+#define N_SAMPLES 1000
+std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int pitch_change) {
+	int nChannels = (int) in_file.get_channels();
 
-#define BUFF_SIZE 6720
-std::unique_ptr<WavInFile> SoundUtils::process(WavInFile &in_file) {
-	int nSamples;
-	float sampleBuffer[BUFF_SIZE];
-	int sampleIntBuffer[BUFF_SIZE];
+	pSoundTouch.setSampleRate(in_file.get_samples_per_sec());
+	pSoundTouch.setChannels(nChannels);
 
-	int nChannels = (int) in_file.num_channels();
-	assert(nChannels > 0);
-	int buffSizeSamples = BUFF_SIZE / nChannels;
+	pSoundTouch.setTempoChange(tempo_change);
+	pSoundTouch.setPitchSemiTones(pitch_change);
 
-	std::unique_ptr<WavInFile> out(new WavInFile(in_file.header()));
+	float sampleBuffer[N_SAMPLES];
+
+	int samples_per_channel;
+	int buffSizeSamples = N_SAMPLES/nChannels;
+
+	std::unique_ptr<Wave> out(new Wave(nChannels, in_file.get_samples_per_sec(), in_file.get_bits_per_sample()));
 	// Process samples read from the input file
-	while(in_file.eof() == 0) {
-		int num;
-
+	for(int i = 0; i < in_file.get_n_samples(); i += N_SAMPLES) {
 		// Read a chunk of samples from the input file
-		num = in_file.read(sampleBuffer, BUFF_SIZE);
-		nSamples = num / nChannels;
+		std::vector<float> samples;
+		int samples_read = in_file.get_samples(i, N_SAMPLES, samples);
+		samples_per_channel = samples_read/nChannels;
 
 		// Feed the samples into SoundTouch processor
-		pSoundTouch.putSamples(sampleBuffer, nSamples);
+		pSoundTouch.putSamples(samples.data(), samples_per_channel);
 
 		// Read ready samples from SoundTouch processor & write them output file.
 		// NOTES:
@@ -82,18 +59,18 @@ std::unique_ptr<WavInFile> SoundUtils::process(WavInFile &in_file) {
 		//   the 'receiveSamples' call is iterated for as many times as it
 		//   outputs samples.
 		do {
-			nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-			out->write(sampleBuffer, 2*nSamples);
-		} while(nSamples != 0);
+			samples_per_channel = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
+			out->append_samples(sampleBuffer, nChannels*samples_per_channel);
+		} while(samples_per_channel != 0);
 	}
 
 	// Now the input file is processed, yet 'flush' few last samples that are
 	// hiding in the SoundTouch's internal processing pipeline.
 	pSoundTouch.flush();
 	do {
-		nSamples = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-		out->write(sampleBuffer, nSamples);
-	} while(nSamples != 0);
+		samples_per_channel = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
+		out->append_samples(sampleBuffer, nChannels*samples_per_channel);
+	} while(samples_per_channel != 0);
 
 	return out;
 }
