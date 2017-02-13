@@ -32,6 +32,8 @@ void Engine::initialise() {
 
 	_wav_file = std::unique_ptr<Wave>(new Wave("/home/lorenzo/nothing2.wav"));
 	_audio_format = _wav_file->format();
+	emit format_changed(&_audio_format);
+
 	_out_file = SoundUtils::Instance()->process(*_wav_file, 100, 0);
 	emit buffer_changed(0, _out_file->data()->size(), *_out_file->data());
 
@@ -39,10 +41,10 @@ void Engine::initialise() {
 	_audio_output_IO_device.open(QIODevice::ReadOnly);
 
 	_audio_output = new QAudioOutput(_audio_output_device, _audio_format, this);
+	_audio_output->setNotifyInterval(50);
 	connect(_audio_output, &QAudioOutput::stateChanged, this, &Engine::_handle_state_changed);
 	connect(_audio_output, &QAudioOutput::notify, this, &Engine::_audio_notify);
 
-	emit format_changed(_audio_format);
 }
 
 void Engine::reset() {
@@ -76,7 +78,7 @@ void Engine::_handle_state_changed(QAudio::State newState) {
 }
 
 void Engine::_audio_notify() {
-	const qint64 play_pos = SoundUtils::audio_length(_audio_format, _audio_output->processedUSecs());
+	const qint64 play_pos = _audio_output->processedUSecs();
 	_set_play_position(play_pos);
 }
 

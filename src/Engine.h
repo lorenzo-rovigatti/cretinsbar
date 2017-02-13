@@ -41,7 +41,7 @@ signals:
 	/**
      * Format of audio data has changed
      */
-	void format_changed(const QAudioFormat &new_format);
+	void format_changed(const QAudioFormat *new_format);
 
 	/**
 	 * Buffer containing audio data has changed.

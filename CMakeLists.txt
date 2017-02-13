@@ -28,18 +28,18 @@ add_definitions(-DQT_MESSAGELOGCONTEXT -Wall -DCRETINSBAR_VERSION=${CRETINSBAR_V
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Multimedia REQUIRED)
-find_package(SoundTouch)
+find_package(Qt5PrintSupport REQUIRED)
+find_package(SoundTouch REQUIRED)
 
 # The Qt5Widgets_INCLUDES also includes the include directories for dependencies QtCore and QtGui
 include_directories(${Qt5Widgets_INCLUDES})
 
-# This allows ui_MainWindow.h to find qcustomplot.h
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/GUI)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/GUI ${CMAKE_CURRENT_SOURCE_DIR}/src/GUI/qcustomplot)
 
 # Boost's headers
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(QT5_LIBRARIES Qt5::Widgets Qt5::Multimedia)
+set(QT5_LIBRARIES Qt5::Widgets Qt5::Multimedia Qt5::PrintSupport)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
@@ -48,10 +48,9 @@ set(SOURCES
 	src/CretinsBar.cpp
 	src/Engine.cpp
 	src/SoundUtils/SoundUtils.cpp
-	src/SoundUtils/WavFile.cpp
 	src/SoundUtils/Wave.cpp
 	src/GUI/MainWindow.cpp
-	src/GUI/Waveform.cpp
+	src/GUI/qcustomplot/qcustomplot.cpp
 )
 
 set(UI_SOURCES

@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="cb::Waveform" name="waveform" native="true"/>
+     <widget class="QCustomPlot" name="plot" native="true"/>
     </item>
    </layout>
   </widget>
@@ -46,9 +46,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>cb::Waveform</class>
+   <class>QCustomPlot</class>
    <extends>QWidget</extends>
-   <header>Waveform.h</header>
+   <header>qcustomplot.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
