@@ -30,12 +30,12 @@
 
 using namespace cb;
 
-Wave::Wave(const std::string & filename) throw (std::exception) {
+Wave::Wave(const QString &filename) throw (std::exception) {
 	_fmt.wFormatTag = 0;
 	_extra_param_length = 0;
 	_fact.samplesNumber = -1;
 
-	QFile file(filename.c_str());
+	QFile file(filename);
 	file.open(QIODevice::ReadOnly);
 	if(file.isOpen() == false) {
 		throw std::runtime_error(strerror( errno));
@@ -230,6 +230,14 @@ int32_t Wave::get_data_size() const {
 
 int32_t Wave::get_n_samples() const {
 	return get_data_size()/get_bytes_per_sample();
+}
+
+qint64 Wave::bytes_from_us(qint64 us) const {
+	qreal time_in_seconds = us/(qreal)1000000.;
+	qint64 n_sample = time_in_seconds*get_samples_per_sec()*get_channels();
+	qint64 n_byte = n_sample*get_bytes_per_sample();
+
+	return n_byte;
 }
 
 QAudioFormat Wave::format() const {

@@ -11,17 +11,13 @@
 
 namespace cb {
 
-CretinsBar::CretinsBar(int &argc, char **argv)
-	: QApplication(argc, argv)
-	, _engine(new Engine(this))
-	, _window(new MainWindow(_engine)) {
+CretinsBar::CretinsBar(int &argc, char **argv) :
+		QApplication(argc, argv), _engine(new Engine(this)), _window(new MainWindow(_engine)) {
 	setOrganizationName("CretinsBar");
 	setApplicationName("CretinsBar");
 	setApplicationVersion("alpha");
 
-	_engine->initialise();
 	_window->show();
-	_engine->start_playback();
 }
 
 CretinsBar::~CretinsBar() {

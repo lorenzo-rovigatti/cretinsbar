@@ -21,7 +21,7 @@ namespace cb {
 class Wave {
 public:
 	Wave();
-	Wave(const std::string & filename) throw (std::exception);
+	Wave(const QString &filename) throw (std::exception);
 	Wave(const Wave& w);
 
 	Wave(int16_t nChannels, int32_t nSamplesPerSec, int16_t wBitsPerSample) throw (std::exception);
@@ -39,6 +39,7 @@ public:
 	int32_t get_avg_bytes_per_sec() const;
 	int32_t get_data_size() const;
 	int32_t get_n_samples() const;
+	qint64 bytes_from_us(qint64 us) const;
 	QAudioFormat format() const;
 	QByteArray *data();
 

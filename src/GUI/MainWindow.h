@@ -34,6 +34,17 @@ public slots:
 	void buffer_changed(qint64 position, qint64 length, const QByteArray &buffer);
 	void play_position_changed(qint64 position);
 	void on_mouse_move(QMouseEvent *event);
+	void erase_statusbar(QMouseEvent *event);
+
+private slots:
+	void _open();
+	void _toggle_play(bool s);
+	void _stop();
+	void _jump_to(QMouseEvent *event);
+
+	void _engine_playing();
+	void _engine_paused();
+	void _engine_stopped();
 
 private:
 	Engine *_engine;

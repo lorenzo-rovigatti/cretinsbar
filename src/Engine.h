@@ -18,6 +18,7 @@
 #include "SoundUtils/Wave.h"
 
 class QAudioOutput;
+class QString;
 
 namespace cb {
 
@@ -28,10 +29,14 @@ public:
 	Engine(QObject *parent);
 	virtual ~Engine();
 
-	void initialise();
+	void load(const QString &filename);
+	void jump_to(qint64 us);
+	bool is_playing();
 
 public slots:
-	void start_playback();
+	void play();
+	void pause();
+	void stop();
 
 private slots:
 	void _handle_state_changed(QAudio::State newState);
@@ -56,6 +61,10 @@ signals:
 	 */
 	void play_position_changed(qint64 position);
 
+	void playing();
+	void paused();
+	void stopped();
+
 private:
 	void reset();
 	void _set_play_position(qint64 position);
@@ -67,7 +76,7 @@ private:
     QBuffer _audio_output_IO_device;
     std::unique_ptr<Wave> _wav_file, _out_file;
     QByteArray _data;
-    qint64 _play_position;
+    qint64 _base_pos, _play_pos;
 };
 
 } /* namespace cb */
