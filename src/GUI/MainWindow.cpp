@@ -72,6 +72,8 @@ void MainWindow::buffer_changed(qint64 position, qint64 length, const QByteArray
 
 	_ui->play_button->setEnabled(true);
 	_ui->stop_button->setEnabled(true);
+	_ui->pitch_slider->setEnabled(true);
+	_ui->tempo_slider->setEnabled(true);
 }
 
 void MainWindow::play_position_changed(qint64 position) {
@@ -103,12 +105,8 @@ void MainWindow::_open() {
 
 
 void MainWindow::_toggle_play(bool s) {
-	if(s) {
-		_engine->play();
-	}
-	else {
-		_engine->pause();
-	}
+	if(s) _engine->play();
+	else _engine->pause();
 }
 
 void MainWindow::_stop() {

@@ -38,7 +38,7 @@ void Engine::load(const QString &filename) {
 	_audio_output_IO_device.open(QIODevice::ReadOnly);
 
 	_audio_output = new QAudioOutput(_audio_output_device, _audio_format, this);
-	_audio_output->setNotifyInterval(50);
+	_audio_output->setNotifyInterval(10);
 	connect(_audio_output, &QAudioOutput::stateChanged, this, &Engine::_handle_state_changed);
 	connect(_audio_output, &QAudioOutput::notify, this, &Engine::_audio_notify);
 }
@@ -72,7 +72,10 @@ void Engine::reset() {
 }
 
 void Engine::play() {
-	if(_audio_output != nullptr && _audio_output->state() != QAudio::ActiveState) _audio_output->start(&_audio_output_IO_device);
+	if(_audio_output != nullptr && _audio_output->state() != QAudio::ActiveState) {
+		if(_audio_output_IO_device.atEnd()) _audio_output_IO_device.seek(0);
+		_audio_output->start(&_audio_output_IO_device);
+	}
 }
 
 void Engine::pause() {
