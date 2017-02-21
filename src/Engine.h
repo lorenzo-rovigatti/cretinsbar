@@ -31,10 +31,13 @@ public:
 
 	void load(const QString &filename);
 	void jump_to(qint64 us);
+	void set_volume(qreal new_volume);
+
 	bool is_playing();
+	bool is_ready();
 
 public slots:
-	void play();
+	void play(qreal tempo_change, int pitch_change);
 	void pause();
 	void stop();
 
@@ -69,6 +72,15 @@ private:
 	void reset();
 	void _set_play_position(qint64 position);
 
+	/** Process the audio stored in _wav_file and store it in _out_file.
+	 *
+	 * The new audio will be generated according to the values passed in as parameters.
+	 *
+	 * @param tempo_change Change in tempo (in percentage)
+	 * @param pitch_change Change in pitch (in number of semitones)
+	 */
+	void _process(qreal tempo_change, int pitch_change);
+
 private:
 	QAudioDeviceInfo _audio_output_device;
 	QAudioOutput *_audio_output;
@@ -77,6 +89,9 @@ private:
     std::unique_ptr<Wave> _wav_file, _out_file;
     QByteArray _data;
     qint64 _base_pos, _play_pos;
+    qreal _volume;
+    qreal _curr_tempo_change;
+    int _curr_pitch_change;
 };
 
 } /* namespace cb */

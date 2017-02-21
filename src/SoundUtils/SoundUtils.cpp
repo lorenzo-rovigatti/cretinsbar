@@ -26,14 +26,14 @@ SoundUtils::~SoundUtils() {
 }
 
 qint64 SoundUtils::audio_length(QAudioFormat &format, qint64 microseconds) {
-	qint64 result = (format.sampleRate()*format.channelCount()*(format.sampleSize()/8))*microseconds/1000000;
-	result -= result % (format.channelCount()*format.sampleSize());
+	qint64 result = (format.sampleRate() * format.channelCount() * (format.sampleSize() / 8)) * microseconds / 1000000;
+	result -= result % (format.channelCount() * format.sampleSize());
 	return result;
 }
 
 qreal SoundUtils::pcmToReal(QAudioFormat &format, int pcm) {
 	qreal max_amplitude = pow(2., format.sampleSize() - 1.);
-	return qreal(pcm)/max_amplitude;
+	return qreal(pcm) / max_amplitude;
 }
 
 #define N_SAMPLES 1024
@@ -49,7 +49,7 @@ std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int
 	float sampleBuffer[N_SAMPLES];
 
 	int samples_per_channel;
-	int buffSizeSamples = N_SAMPLES/nChannels;
+	int buffSizeSamples = N_SAMPLES / nChannels;
 
 	std::unique_ptr<Wave> out(new Wave(nChannels, in_file.get_samples_per_sec(), in_file.get_bits_per_sample()));
 	// Process samples read from the input file
@@ -57,7 +57,7 @@ std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int
 		// Read a chunk of samples from the input file
 		std::vector<float> samples;
 		int samples_read = in_file.get_samples(i, N_SAMPLES, samples);
-		samples_per_channel = samples_read/nChannels;
+		samples_per_channel = samples_read / nChannels;
 
 		// Feed the samples into SoundTouch processor
 		pSoundTouch.putSamples(samples.data(), samples_per_channel);
@@ -72,7 +72,7 @@ std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int
 		//   outputs samples.
 		do {
 			samples_per_channel = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-			out->append_samples(sampleBuffer, nChannels*samples_per_channel);
+			out->append_samples(sampleBuffer, nChannels * samples_per_channel);
 		} while(samples_per_channel != 0);
 	}
 
@@ -81,7 +81,7 @@ std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int
 	pSoundTouch.flush();
 	do {
 		samples_per_channel = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
-		out->append_samples(sampleBuffer, nChannels*samples_per_channel);
+		out->append_samples(sampleBuffer, nChannels * samples_per_channel);
 	} while(samples_per_channel != 0);
 
 	return out;

@@ -57,10 +57,10 @@ Wave::Wave(const QString &filename) throw (std::exception) {
 	if(_fmt.wFormatTag != 1) {
 		throw std::runtime_error("Only wav files with format tag == 1 are supported");
 		/*file.read(reinterpret_cast<char*>(&extra_param_length_), 2); //2 bytes
-		if(extra_param_length_ > 0) {
-			extra_param_.resize(extra_param_length_);
-			file.read(&extra_param_[0], extra_param_length_);
-		}*/
+		 if(extra_param_length_ > 0) {
+		 extra_param_.resize(extra_param_length_);
+		 file.read(&extra_param_[0], extra_param_length_);
+		 }*/
 	}
 
 	if(get_bytes_per_sample() != 2) {
@@ -124,8 +124,7 @@ Wave::~Wave() {
 }
 
 Wave Wave::operator+(const Wave &w) const throw (std::exception) {
-	if(_fmt.wFormatTag != w._fmt.wFormatTag)
-		throw std::runtime_error("Can't concatenate waves with different format tags");
+	if(_fmt.wFormatTag != w._fmt.wFormatTag) throw std::runtime_error("Can't concatenate waves with different format tags");
 
 	Wave res;
 	res._fmthdr = w._fmthdr;
@@ -156,17 +155,13 @@ Wave& Wave::operator+=(const Wave &w) throw (std::exception) {
 		return *this;
 	}
 
-	if(_fmt.wFormatTag != w._fmt.wFormatTag)
-		throw std::runtime_error("Can't concatenate waves with different format tags");
+	if(_fmt.wFormatTag != w._fmt.wFormatTag) throw std::runtime_error("Can't concatenate waves with different format tags");
 
-	if(_fmt.nChannels != w._fmt.nChannels)
-		throw std::runtime_error("different number of channels");
+	if(_fmt.nChannels != w._fmt.nChannels) throw std::runtime_error("different number of channels");
 
-	if(_fmt.nSamplesPerSec != w._fmt.nSamplesPerSec)
-		throw std::runtime_error("different number of samples per second");
+	if(_fmt.nSamplesPerSec != w._fmt.nSamplesPerSec) throw std::runtime_error("different number of samples per second");
 
-	if(_fmt.wBitsPerSample != w._fmt.wBitsPerSample)
-		throw std::runtime_error("different number of bits per sample");
+	if(_fmt.wBitsPerSample != w._fmt.wBitsPerSample) throw std::runtime_error("different number of bits per sample");
 
 	_wave.append(w._wave);
 
@@ -186,9 +181,7 @@ void Wave::_init(const Wave& w) {
 	_fact = w._fact;
 
 	_extra_param_length = w._extra_param_length;
-	if(w._extra_param_length) {
-		_extra_param = w._extra_param;
-	}
+	if(w._extra_param_length) _extra_param = w._extra_param;
 	_wave = w._wave;
 }
 
@@ -213,7 +206,7 @@ int16_t Wave::get_bits_per_sample() const {
 }
 
 int16_t Wave::get_bytes_per_sample() const {
-	return get_bits_per_sample()/8;
+	return get_bits_per_sample() / 8;
 }
 
 int32_t Wave::get_samples_per_sec() const {
@@ -229,13 +222,13 @@ int32_t Wave::get_data_size() const {
 }
 
 int32_t Wave::get_n_samples() const {
-	return get_data_size()/get_bytes_per_sample();
+	return get_data_size() / get_bytes_per_sample();
 }
 
 qint64 Wave::bytes_from_us(qint64 us) const {
-	qreal time_in_seconds = us/(qreal)1000000.;
-	qint64 n_sample = time_in_seconds*get_samples_per_sec()*get_channels();
-	qint64 n_byte = n_sample*get_bytes_per_sample();
+	qreal time_in_seconds = us / (qreal) 1000000.;
+	qint64 n_sample = time_in_seconds * get_samples_per_sec() * get_channels();
+	qint64 n_byte = n_sample * get_bytes_per_sample();
 
 	return n_byte;
 }
@@ -256,24 +249,24 @@ QByteArray *Wave::data() {
 }
 
 int Wave::get_samples(unsigned int offset, unsigned int n_samples, std::vector<float> &samples) const {
-	unsigned int byte_offset = offset*get_bytes_per_sample();
+	unsigned int byte_offset = offset * get_bytes_per_sample();
 	if(byte_offset > (unsigned) get_data_size()) return 0;
 
-	int byte_size = n_samples*get_bytes_per_sample();
+	int byte_size = n_samples * get_bytes_per_sample();
 	unsigned int real_size = (byte_offset + byte_size) < (unsigned) get_data_size() ? byte_size : (unsigned) get_data_size() - byte_offset;
-	unsigned int real_n_samples = real_size/get_bytes_per_sample();
+	unsigned int real_n_samples = real_size / get_bytes_per_sample();
 
 	switch(get_bytes_per_sample()) {
 	case 2: {
 		const short *data_short = reinterpret_cast<const short *>(_wave.data() + byte_offset);
-		double conv = 1.0/32768.0;
+		double conv = 1.0 / 32768.0;
 		for(uint i = 0; i < real_n_samples; i++) {
 			short value_s = data_short[i];
-			float value_f = (float)(value_s*conv);
+			float value_f = (float) (value_s * conv);
 			samples.push_back(value_f);
 		}
 		break;
-		}
+	}
 	}
 
 	return real_n_samples;
@@ -294,7 +287,7 @@ int Wave::_saturate(float fvalue, float minval, float maxval) {
 }
 
 void Wave::append_samples(const float *samples, int n_samples) {
-	int tot_byte  = n_samples*get_bytes_per_sample();
+	int tot_byte = n_samples * get_bytes_per_sample();
 	QByteArray to_append(tot_byte, 0);
 
 	switch(get_bytes_per_sample()) {
@@ -302,7 +295,7 @@ void Wave::append_samples(const float *samples, int n_samples) {
 		short *data_s = reinterpret_cast<short *>(to_append.data());
 		for(int i = 0; i < n_samples; i++) {
 			float value_f = samples[i];
-			short value_s = (short) _saturate(value_f*32768.0f, -32768.0f, 32767.0f);
+			short value_s = (short) _saturate(value_f * 32768.0f, -32768.0f, 32767.0f);
 			data_s[i] = value_s;
 		}
 	}
@@ -326,11 +319,9 @@ void Wave::append_samples(const char *samples, int size) {
 }
 
 void Wave::append_samples(const QByteArray &samples_l, const QByteArray &samples_r) {
-	if(_fmt.nChannels != 2)
-		throw std::logic_error(("Wave::append_samples(): cannot add stereo samples, nChannels = " + std::to_string(_fmt.nChannels)).c_str());
+	if(_fmt.nChannels != 2) throw std::logic_error(("Wave::append_samples(): cannot add stereo samples, nChannels = " + std::to_string(_fmt.nChannels)).c_str());
 
-	if(samples_l.size() != samples_r.size())
-		throw std::logic_error(("Wave::append_samples(): samples have different sizes, l " + std::to_string(samples_l.size()) + " r " + std::to_string(samples_r.size())).c_str());
+	if(samples_l.size() != samples_r.size()) throw std::logic_error(("Wave::append_samples(): samples have different sizes, l " + std::to_string(samples_l.size()) + " r " + std::to_string(samples_r.size())).c_str());
 
 	int bytes_per_sample = _fmt.wBitsPerSample / 8;
 
@@ -346,8 +337,7 @@ void Wave::append_samples(const QByteArray &samples_l, const QByteArray &samples
 }
 
 void Wave::append_samples(const char* samples_l, const char* samples_r, int size) {
-	if(_fmt.nChannels != 2)
-		throw std::logic_error(("Wave::append_samples(): cannot add stereo samples, nChannels = " + std::to_string(_fmt.nChannels)).c_str());
+	if(_fmt.nChannels != 2) throw std::logic_error(("Wave::append_samples(): cannot add stereo samples, nChannels = " + std::to_string(_fmt.nChannels)).c_str());
 
 	int bytes_per_sample = _fmt.wBitsPerSample / 8;
 
@@ -372,8 +362,7 @@ void Wave::save(const QString &filename) {
 
 	if(_fmt.wFormatTag > 1) {
 		file.write(reinterpret_cast<char*>(&_extra_param_length), 2);
-		if(_extra_param_length > 0)
-			file.write(&_extra_param[0], _extra_param_length);
+		if(_extra_param_length > 0) file.write(&_extra_param[0], _extra_param_length);
 	}
 	if(_fact.samplesNumber > -1) {
 		file.write(const_cast<char*>("fact"), 4);

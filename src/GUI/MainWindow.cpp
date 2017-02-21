@@ -17,7 +17,9 @@
 namespace cb {
 
 MainWindow::MainWindow(Engine *engine, QWidget *parent) :
-		QMainWindow(parent), _engine(engine), _ui(new Ui::MainWindow) {
+				QMainWindow(parent),
+				_engine(engine),
+				_ui(new Ui::MainWindow) {
 	_ui->setupUi(this);
 	_init_plot();
 
@@ -33,6 +35,11 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 
 	connect(_ui->play_button, &QPushButton::toggled, this, &MainWindow::_toggle_play);
 	connect(_ui->stop_button, &QPushButton::clicked, this, &MainWindow::_stop);
+
+	// right-align all the elements in the leftmost column of the tempo/pitch change grid layout
+	for(int i = 0; i < _ui->slider_layout->rowCount(); i++) {
+		_ui->slider_layout->itemAtPosition(i, 0)->setAlignment(Qt::AlignRight);
+	}
 }
 
 MainWindow::~MainWindow() {
@@ -84,9 +91,12 @@ void MainWindow::play_position_changed(qint64 position) {
 }
 
 void MainWindow::on_mouse_move(QMouseEvent *event) {
-	// transform the mouse position to x,y coordinates and show them in the status bar
-	qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
-	QString msg = QString("%1 s").arg(x, 0, 'f', 2);
+	QString msg;
+	if(_engine->is_ready()) {
+		// transform the mouse position to x,y coordinates and show them in the status bar
+		qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
+		msg = QString("%1 s").arg(x, 0, 'f', 2);
+	}
 	_ui->statusbar->showMessage(msg);
 }
 
@@ -103,9 +113,13 @@ void MainWindow::_open() {
 	}
 }
 
-
 void MainWindow::_toggle_play(bool s) {
-	if(s) _engine->play();
+	if(s) {
+		qreal tempo_change = (qreal) _ui->tempo_slider->value() - 100.;
+		int pitch_change = _ui->pitch_slider->value();
+		qDebug() << tempo_change << pitch_change;
+		_engine->play(tempo_change, pitch_change);
+	}
 	else _engine->pause();
 }
 
@@ -160,7 +174,7 @@ void MainWindow::_init_plot() {
 	_position->setLayer("play_position");
 
 	connect(_plot, &QCustomPlot::mouseMove, this, &MainWindow::on_mouse_move);
-	connect(_plot, &QCustomPlot::mouseRelease, this, &MainWindow::_jump_to);
+	connect(_plot, &QCustomPlot::mouseDoubleClick, this, &MainWindow::_jump_to);
 //	connect(_plot, &QCustomPlot::leaveEvent, this, &MainWindow::erase_statusbar);
 }
 
