@@ -1,7 +1,8 @@
-# cretinsbar
+# Cretin's Bar
+Cretin's Bar will be a much-less-featured (at least for the foreseeable future...) open-source alternative to [Transcribe!](https://www.seventhstring.com/xscribe/overview.html).
 
 ## Installation
-cretinsbar requires cmake, qt5 and SoundTouch. On Ubuntu (or any Debian-derived distro, I believe) this boils down to installing
+Cretin's Bar requires cmake, qt5 and SoundTouch. On Ubuntu (or any Debian-derived distro, I believe) this boils down to installing
 * cmake
 * qtbase5-dev
 * qtmultimedia5-dev
@@ -16,8 +17,12 @@ Once all the dependencies are met, the code can be compiled as follows:
 If the compilation is successful, the cretinsbar executable will be placed in the build/bin folder. 
 
 ## Features
+* Support for 16-bit WAV files
+* Slow down/speed up 
+* Change pitch
 
 ## Future features
+* Add support for mp3, ogg, etc.
 
 ## Tentative roadmap
 

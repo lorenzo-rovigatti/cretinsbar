@@ -302,6 +302,8 @@ void Wave::append_samples(const float *samples, int n_samples) {
 	}
 
 	_wave.append(to_append);
+	_update_data_size();
+	_update_riff_size();
 }
 
 void Wave::append_samples(const QByteArray &samples) {

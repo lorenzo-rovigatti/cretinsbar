@@ -29,9 +29,14 @@ public:
 	Engine(QObject *parent);
 	virtual ~Engine();
 
-	void load(const QString &filename);
-	void jump_to(qint64 us);
+	const QByteArray *load(const QString &filename);
+	void seek(qint64 us);
 	void set_volume(qreal new_volume);
+
+	int channel_count();
+	int sample_size();
+	int sample_rate();
+	QAudioFormat::SampleType sample_type();
 
 	bool is_playing();
 	bool is_ready();
@@ -46,18 +51,6 @@ private slots:
     void _audio_notify();
 
 signals:
-	/**
-     * Format of audio data has changed
-     */
-	void format_changed(const QAudioFormat *new_format);
-
-	/**
-	 * Buffer containing audio data has changed.
-	 * \param position Position of start of buffer in bytes
-	 * \param buffer   Buffer
-	 */
-	void buffer_changed(qint64 position, qint64 length, const QByteArray &buffer);
-
 	 /**
 	 * Position of the audio output device has changed.
 	 * \param position Position in bytes
@@ -69,8 +62,11 @@ signals:
 	void stopped();
 
 private:
-	void reset();
-	void _set_play_position(qint64 position);
+	void _reset();
+	void _seek_buffer(qint64 new_time);
+	qint64 _from_original_to_real_time(qint64 time);
+	qint64 _from_real_to_original_time(qint64 time);
+	void _set_play_time(qint64 time);
 
 	/** Process the audio stored in _wav_file and store it in _out_file.
 	 *
@@ -88,7 +84,11 @@ private:
     QBuffer _audio_output_IO_device;
     std::unique_ptr<Wave> _wav_file, _out_file;
     QByteArray _data;
-    qint64 _base_pos, _play_pos;
+
+    /// Base play position (in microseconds of the original stream).
+    qint64 _base_time;
+    /// Current play position (in microseconds of the original stream).
+    qint64 _play_time;
     qreal _volume;
     qreal _curr_tempo_change;
     int _curr_pitch_change;
