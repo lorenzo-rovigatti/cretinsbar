@@ -74,6 +74,7 @@ void MainWindow::_open() {
 		_ui->stop_button->setEnabled(false);
 		_ui->pitch_slider->setEnabled(false);
 		_ui->tempo_slider->setEnabled(false);
+		_ui->plot_scrollbar->setEnabled(false);
 
 		const QByteArray *buffer =_engine->load(filename);
 		qint64 length = buffer->length();
@@ -98,6 +99,7 @@ void MainWindow::_open() {
 		graph->setPen(QPen(QColor("black")));
 		graph->setData(x_data, y_data);
 		_plot->xAxis->setRange(0, length_in_seconds);
+		_ui->plot_scrollbar->setRange(0, length_in_seconds*100);
 
 		long max_val = 2 << (_engine->sample_size() - 2);
 		long min_val = (_engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
@@ -109,6 +111,7 @@ void MainWindow::_open() {
 		_ui->stop_button->setEnabled(true);
 		_ui->pitch_slider->setEnabled(true);
 		_ui->tempo_slider->setEnabled(true);
+		_ui->plot_scrollbar->setEnabled(true);
 		this->setEnabled(true);
 	}
 }
@@ -146,6 +149,21 @@ void MainWindow::_engine_stopped() {
 	_ui->play_button->setText("Play");
 }
 
+void MainWindow::_x_axis_changed(const QCPRange &range) {
+	// adjust the position of the scroll bar slider
+	_ui->plot_scrollbar->setValue(qRound(range.center()*100.0));
+	// adjust the size of the scroll bar slider
+	_ui->plot_scrollbar->setPageStep(qRound(range.size()*100.0));
+}
+
+void MainWindow::_plot_scrollbar_changed(int value) {
+	// we don't want to replot twice if the user is dragging plot
+	if(qAbs(_plot->xAxis->range().center() - value / 100.0) > 0.01) {
+		_plot->xAxis->setRange(value/100.0, _plot->xAxis->range().size(), Qt::AlignCenter);
+		_plot->replot();
+	}
+}
+
 void MainWindow::_init_plot() {
 	_plot = _ui->plot;
 	_plot->setMaximumHeight(300);
@@ -172,6 +190,10 @@ void MainWindow::_init_plot() {
 	_plot->addLayer(_pos_layer, 0, QCustomPlot::limAbove);
 	_plot->layer(_pos_layer)->setMode(QCPLayer::lmBuffered);
 	_position->setLayer(_pos_layer);
+
+	// setup the scrollbar
+	connect(_ui->plot_scrollbar, &QScrollBar::valueChanged, this, &MainWindow::_plot_scrollbar_changed);
+	connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(_x_axis_changed(QCPRange)));
 
 	connect(_plot, &QCustomPlot::mouseMove, this, &MainWindow::on_mouse_move);
 	connect(_plot, &QCustomPlot::mouseDoubleClick, this, &MainWindow::_seek);

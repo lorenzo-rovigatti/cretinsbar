@@ -16,6 +16,7 @@ class MainWindow;
 
 class QAudioFormat;
 class QCustomPlot;
+class QCPRange;
 class QCPItemStraightLine;
 
 namespace cb {
@@ -33,6 +34,9 @@ public slots:
 	void play_position_changed(qint64 position);
 	void on_mouse_move(QMouseEvent *event);
 	void erase_statusbar(QMouseEvent *event);
+	// plot slots
+	void _x_axis_changed(const QCPRange &range);
+	void _plot_scrollbar_changed(int value);
 
 private slots:
 	void _open();
