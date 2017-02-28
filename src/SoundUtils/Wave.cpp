@@ -225,6 +225,10 @@ int32_t Wave::get_n_samples() const {
 	return get_data_size() / get_bytes_per_sample();
 }
 
+qreal Wave::duration() const {
+	return get_n_samples() / (qreal) (get_samples_per_sec()*get_channels());
+}
+
 qint64 Wave::bytes_from_us(qint64 us) const {
 	qreal time_in_seconds = us / (qreal) 1000000.;
 	qint64 n_sample = time_in_seconds * get_samples_per_sec() * get_channels();

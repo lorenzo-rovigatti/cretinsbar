@@ -81,6 +81,11 @@ QAudioFormat::SampleType Engine::sample_type() {
 	return _audio_format.sampleType();
 }
 
+qreal Engine::duration() {
+	if(is_ready()) return _wav_file->duration();
+	else return 0.;
+}
+
 bool Engine::is_playing() {
 	return _audio_output->state() == QAudio::ActiveState;
 }

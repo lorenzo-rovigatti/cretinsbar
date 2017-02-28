@@ -37,6 +37,7 @@ public:
 	int sample_size();
 	int sample_rate();
 	QAudioFormat::SampleType sample_type();
+	qreal duration();
 
 	bool is_playing();
 	bool is_ready();

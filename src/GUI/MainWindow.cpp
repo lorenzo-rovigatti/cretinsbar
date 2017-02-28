@@ -81,7 +81,7 @@ void MainWindow::_open() {
 		_plot->clearGraphs();
 		int bytes = _engine->sample_size() / 8;
 		long n_samples = length / bytes;
-		qreal length_in_seconds = n_samples / (qreal) _engine->sample_rate() / _engine->channel_count();
+		qreal length_in_seconds = _engine->duration();
 		long increment = _engine->channel_count();
 
 		qDebug() << length << n_samples << increment << length_in_seconds;
@@ -98,8 +98,8 @@ void MainWindow::_open() {
 		QCPGraph *graph = _plot->addGraph();
 		graph->setPen(QPen(QColor("black")));
 		graph->setData(x_data, y_data);
+		_ui->plot_scrollbar->setRange(0, length_in_seconds);
 		_plot->xAxis->setRange(0, length_in_seconds);
-		_ui->plot_scrollbar->setRange(0, length_in_seconds*100);
 
 		long max_val = 2 << (_engine->sample_size() - 2);
 		long min_val = (_engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
@@ -150,16 +150,24 @@ void MainWindow::_engine_stopped() {
 }
 
 void MainWindow::_x_axis_changed(const QCPRange &range) {
-	// adjust the position of the scroll bar slider
-	_ui->plot_scrollbar->setValue(qRound(range.center()*100.0));
-	// adjust the size of the scroll bar slider
-	_ui->plot_scrollbar->setPageStep(qRound(range.size()*100.0));
+	// make sure that we do not zoom out too much
+	if(range.lower < 0. || range.upper > _engine->duration()) {
+		QCPRange new_range = range.bounded(0, _engine->duration());
+		_plot->xAxis->setRange(new_range);
+	}
+	else {
+		// adjust the position of the scroll bar slider
+		_ui->plot_scrollbar->setRange(0, qRound(_engine->duration() - range.size()));
+		_ui->plot_scrollbar->setValue(qRound(range.center()));
+		// adjust the size of the scroll bar slider
+		_ui->plot_scrollbar->setPageStep(qRound(range.size()));
+	}
 }
 
 void MainWindow::_plot_scrollbar_changed(int value) {
 	// we don't want to replot twice if the user is dragging plot
 	if(qAbs(_plot->xAxis->range().center() - value / 100.0) > 0.01) {
-		_plot->xAxis->setRange(value/100.0, _plot->xAxis->range().size(), Qt::AlignCenter);
+		_plot->xAxis->setRange(value, _plot->xAxis->range().size(), Qt::AlignCenter);
 		_plot->replot();
 	}
 }

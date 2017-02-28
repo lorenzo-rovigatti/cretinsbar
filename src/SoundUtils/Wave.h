@@ -39,6 +39,7 @@ public:
 	int32_t get_avg_bytes_per_sec() const;
 	int32_t get_data_size() const;
 	int32_t get_n_samples() const;
+	qreal duration() const;
 	qint64 bytes_from_us(qint64 us) const;
 	QAudioFormat format() const;
 	QByteArray *data();
