@@ -115,14 +115,14 @@ void Engine::play(qreal tempo_change, int pitch_change) {
 		}
 
 		if(_audio_output_IO_device.atEnd()) _seek_buffer(_base_time);
-		_audio_output->start(&_audio_output_IO_device);
+		if(_audio_output->state() == QAudio::SuspendedState) _audio_output->resume();
+		else _audio_output->start(&_audio_output_IO_device);
 	}
 }
 
 void Engine::pause() {
 	if(is_ready() && _audio_output->state() == QAudio::ActiveState) {
 		_audio_output->suspend();
-		_base_time = _play_time;
 	}
 }
 
@@ -141,6 +141,7 @@ void Engine::_handle_state_changed(QAudio::State newState) {
 		// Stopped for other reasons
 		if(_audio_output->error() != QAudio::NoError) {
 			qDebug() << _audio_output->error();
+			if(!_audio_output_IO_device.atEnd()) _audio_output->start(&_audio_output_IO_device);
 		}
 		_set_play_time(0);
 		break;

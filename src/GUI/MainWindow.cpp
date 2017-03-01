@@ -26,7 +26,7 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 
 	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_open);
 
-	connect(_engine, &Engine::play_position_changed, this, &MainWindow::play_position_changed);
+	connect(_engine, &Engine::play_position_changed, this, &MainWindow::_play_position_changed);
 
 	connect(_engine, &Engine::playing, this, &MainWindow::_engine_playing);
 	connect(_engine, &Engine::paused, this, &MainWindow::_engine_paused);
@@ -43,23 +43,6 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 
 MainWindow::~MainWindow() {
 
-}
-
-void MainWindow::play_position_changed(qint64 position) {
-	qreal pos_in_sec = position / (qreal) 1000000.;
-	_position->point1->setCoords(pos_in_sec, -1);
-	_position->point2->setCoords(pos_in_sec, 1);
-	_plot->layer(_pos_layer)->replot();
-}
-
-void MainWindow::on_mouse_move(QMouseEvent *event) {
-	QString msg;
-	if(_engine->is_ready()) {
-		// transform the mouse position to x,y coordinates and show them in the status bar
-		qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
-		msg = QString("%1 s").arg(x, 0, 'f', 2);
-	}
-	_ui->statusbar->showMessage(msg);
 }
 
 void MainWindow::erase_statusbar(QMouseEvent *event) {
@@ -129,9 +112,44 @@ void MainWindow::_stop() {
 	_engine->stop();
 }
 
-void MainWindow::_seek(QMouseEvent *event) {
-	qint64 curr_pos_us = _plot->xAxis->pixelToCoord(event->pos().x()) * 1000000;
+void MainWindow::_play_position_changed(qint64 position) {
+	qreal pos_in_sec = position / (qreal) 1000000.;
+	_position->point1->setCoords(pos_in_sec, -1);
+	_position->point2->setCoords(pos_in_sec, 1);
+	_plot->layer(_pos_layer)->replot();
+}
+
+void MainWindow::_plot_on_mouse_press(QMouseEvent *event) {
+	qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
+	qint64 curr_pos_us = x * 1000000;
 	_engine->seek(curr_pos_us);
+	_press_pos = event->pos();
+
+	_selection->setVisible(false);
+	_selection->topLeft->setCoords(x, _plot->yAxis->range().upper);
+	_plot->layer(_pos_layer)->replot();
+}
+
+void MainWindow::_plot_on_mouse_release(QMouseEvent *event) {
+
+}
+
+void MainWindow::_plot_on_mouse_move(QMouseEvent *event) {
+	QString msg;
+	qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
+	if(_engine->is_ready()) {
+		// transform the mouse position to x,y coordinates and show them in the status bar
+		msg = QString("%1 s").arg(x, 0, 'f', 2);
+	}
+	_ui->statusbar->showMessage(msg);
+
+	int x_diff = event->pos().x() - _press_pos.x();
+	bool left_pressed = event->buttons() & Qt::LeftButton;
+	if(left_pressed && x_diff > 10) {
+		_selection->bottomRight->setCoords(x, _plot->yAxis->range().lower);
+		_selection->setVisible(true);
+		_plot->layer(_pos_layer)->replot();
+	}
 }
 
 void MainWindow::_engine_playing() {
@@ -189,22 +207,30 @@ void MainWindow::_init_plot() {
 	_plot->yAxis->grid()->setVisible(false);
 	_plot->yAxis->setBasePen(Qt::NoPen);
 
+	_plot->addLayer(_pos_layer, 0, QCustomPlot::limAbove);
+	_plot->layer(_pos_layer)->setMode(QCPLayer::lmBuffered);
+
+	_selection = new QCPItemRect(_plot);
+	_selection->setBrush(QBrush(QColor(100, 100, 100, 100)));
+	_selection->setPen(Qt::NoPen);
+	_selection->setLayer(_pos_layer);
+	_selection->setVisible(false);
+
 	_position = new QCPItemStraightLine(_plot);
 	_position->point1->setCoords(0, -1);
 	_position->point2->setCoords(0, 1);
 	QPen line_pen(QColor("red"));
 	line_pen.setWidth(3);
 	_position->setPen(line_pen);
-	_plot->addLayer(_pos_layer, 0, QCustomPlot::limAbove);
-	_plot->layer(_pos_layer)->setMode(QCPLayer::lmBuffered);
 	_position->setLayer(_pos_layer);
 
 	// setup the scrollbar
 	connect(_ui->plot_scrollbar, &QScrollBar::valueChanged, this, &MainWindow::_plot_scrollbar_changed);
 	connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(_x_axis_changed(QCPRange)));
 
-	connect(_plot, &QCustomPlot::mouseMove, this, &MainWindow::on_mouse_move);
-	connect(_plot, &QCustomPlot::mouseDoubleClick, this, &MainWindow::_seek);
+	connect(_plot, &QCustomPlot::mouseMove, this, &MainWindow::_plot_on_mouse_move);
+	connect(_plot, &QCustomPlot::mousePress, this, &MainWindow::_plot_on_mouse_press);
+	connect(_plot, &QCustomPlot::mouseRelease, this, &MainWindow::_plot_on_mouse_release);
 //	connect(_plot, &QCustomPlot::leaveEvent, this, &MainWindow::erase_statusbar);
 }
 
