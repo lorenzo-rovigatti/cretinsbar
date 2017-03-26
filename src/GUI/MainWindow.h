@@ -31,11 +31,13 @@ public:
 	MainWindow(Engine *engine, QWidget *parent = 0);
 	virtual ~MainWindow();
 
+	void load_in_engine(QString filename);
+
 public slots:
 	void erase_statusbar(QMouseEvent *event);
 
 private slots:
-	void _open();
+	void _on_open();
 	void _toggle_play(bool s);
 	void _stop();
 

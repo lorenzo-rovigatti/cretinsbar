@@ -24,7 +24,7 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	_ui->setupUi(this);
 	_init_plot();
 
-	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_open);
+	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_on_open);
 
 	connect(_engine, &Engine::play_position_changed, this, &MainWindow::_play_position_changed);
 
@@ -49,54 +49,56 @@ void MainWindow::erase_statusbar(QMouseEvent *event) {
 	_ui->statusbar->showMessage("");
 }
 
-void MainWindow::_open() {
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open file"), "", tr("WAV files(*.wav)"));
-	if(filename.size() > 0) {
-		this->setEnabled(false);
-		_ui->play_button->setEnabled(false);
-		_ui->stop_button->setEnabled(false);
-		_ui->pitch_slider->setEnabled(false);
-		_ui->tempo_slider->setEnabled(false);
-		_ui->plot_scrollbar->setEnabled(false);
+void MainWindow::load_in_engine(QString filename) {
+	this->setEnabled(false);
+	_ui->play_button->setEnabled(false);
+	_ui->stop_button->setEnabled(false);
+	_ui->pitch_slider->setEnabled(false);
+	_ui->tempo_slider->setEnabled(false);
+	_ui->plot_scrollbar->setEnabled(false);
 
-		const QByteArray *buffer =_engine->load(filename);
-		qint64 length = buffer->length();
-		_plot->clearGraphs();
-		int bytes = _engine->sample_size() / 8;
-		long n_samples = length / bytes;
-		qreal length_in_seconds = _engine->duration();
-		long increment = _engine->channel_count();
+	const QByteArray *buffer =_engine->load(filename);
+	qint64 length = buffer->length();
+	_plot->clearGraphs();
+	int bytes = _engine->sample_size() / 8;
+	long n_samples = length / bytes;
+	qreal length_in_seconds = _engine->duration();
+	long increment = _engine->channel_count();
 
-		qDebug() << length << n_samples << increment << length_in_seconds;
+	qDebug() << length << n_samples << increment << length_in_seconds;
 
-		const short *samples = reinterpret_cast<const short *>(buffer->data());
-		QVector<qreal> x_data(n_samples);
-		QVector<qreal> y_data(n_samples);
-		for(int i = 0; i < n_samples; i += increment) {
-			int idx = i / increment;
-			x_data[idx] = idx / (qreal) _engine->sample_rate();
-			y_data[idx] = (qreal) samples[i];
-		}
-
-		QCPGraph *graph = _plot->addGraph();
-		graph->setPen(QPen(QColor("black")));
-		graph->setData(x_data, y_data);
-		_ui->plot_scrollbar->setRange(0, length_in_seconds);
-		_plot->xAxis->setRange(0, length_in_seconds);
-
-		long max_val = 2 << (_engine->sample_size() - 2);
-		long min_val = (_engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
-		_plot->yAxis->setRange(min_val, max_val);
-
-		_plot->replot();
-
-		_ui->play_button->setEnabled(true);
-		_ui->stop_button->setEnabled(true);
-		_ui->pitch_slider->setEnabled(true);
-		_ui->tempo_slider->setEnabled(true);
-		_ui->plot_scrollbar->setEnabled(true);
-		this->setEnabled(true);
+	const short *samples = reinterpret_cast<const short *>(buffer->data());
+	QVector<qreal> x_data(n_samples);
+	QVector<qreal> y_data(n_samples);
+	for(int i = 0; i < n_samples; i += increment) {
+		int idx = i / increment;
+		x_data[idx] = idx / (qreal) _engine->sample_rate();
+		y_data[idx] = (qreal) samples[i];
 	}
+
+	QCPGraph *graph = _plot->addGraph();
+	graph->setPen(QPen(QColor("black")));
+	graph->setData(x_data, y_data);
+	_ui->plot_scrollbar->setRange(0, length_in_seconds);
+	_plot->xAxis->setRange(0, length_in_seconds);
+
+	long max_val = 2 << (_engine->sample_size() - 2);
+	long min_val = (_engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
+	_plot->yAxis->setRange(min_val, max_val);
+
+	_plot->replot();
+
+	_ui->play_button->setEnabled(true);
+	_ui->stop_button->setEnabled(true);
+	_ui->pitch_slider->setEnabled(true);
+	_ui->tempo_slider->setEnabled(true);
+	_ui->plot_scrollbar->setEnabled(true);
+	this->setEnabled(true);
+}
+
+void MainWindow::_on_open() {
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open file"), "", tr("WAV files(*.wav)"));
+	if(filename.size() > 0) load_in_engine(filename);
 }
 
 void MainWindow::_toggle_play(bool s) {
@@ -116,22 +118,29 @@ void MainWindow::_play_position_changed(qint64 position) {
 	qreal pos_in_sec = position / (qreal) 1000000.;
 	_position->point1->setCoords(pos_in_sec, -1);
 	_position->point2->setCoords(pos_in_sec, 1);
+	_position->setVisible(true);
 	_plot->layer(_pos_layer)->replot();
 }
 
 void MainWindow::_plot_on_mouse_press(QMouseEvent *event) {
-	qreal x = _plot->xAxis->pixelToCoord(event->pos().x());
-	qint64 curr_pos_us = x * 1000000;
-	_engine->seek(curr_pos_us);
 	_press_pos = event->pos();
 
+	_position->setVisible(false);
 	_selection->setVisible(false);
-	_selection->topLeft->setCoords(x, _plot->yAxis->range().upper);
 	_plot->layer(_pos_layer)->replot();
 }
 
 void MainWindow::_plot_on_mouse_release(QMouseEvent *event) {
+	qreal starting_x;
+	if(_selection->visible()) {
+		starting_x = _selection->topLeft->coords().x();
+	}
+	else {
+		starting_x = _plot->xAxis->pixelToCoord(event->pos().x());
+	}
 
+	qint64 starting_us = starting_x * 1000000;
+	_engine->seek(starting_us);
 }
 
 void MainWindow::_plot_on_mouse_move(QMouseEvent *event) {
@@ -143,10 +152,20 @@ void MainWindow::_plot_on_mouse_move(QMouseEvent *event) {
 	}
 	_ui->statusbar->showMessage(msg);
 
-	int x_diff = event->pos().x() - _press_pos.x();
+	int pixel_diff = event->pos().x() - _press_pos.x();
 	bool left_pressed = event->buttons() & Qt::LeftButton;
-	if(left_pressed && x_diff > 10) {
-		_selection->bottomRight->setCoords(x, _plot->yAxis->range().lower);
+	if(left_pressed && fabs(pixel_diff) > 10) {
+		qreal left_pos, right_pos;
+		if(pixel_diff > 0) {
+			left_pos = _plot->xAxis->pixelToCoord(_press_pos.x());
+			right_pos = x;
+		}
+		else {
+			left_pos = x;
+			right_pos = _plot->xAxis->pixelToCoord(_press_pos.x());
+		}
+		_selection->topLeft->setCoords(left_pos, _plot->yAxis->range().upper);
+		_selection->bottomRight->setCoords(right_pos, _plot->yAxis->range().lower);
 		_selection->setVisible(true);
 		_plot->layer(_pos_layer)->replot();
 	}

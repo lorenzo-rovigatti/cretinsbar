@@ -19,6 +19,11 @@ CretinsBar::CretinsBar(int &argc, char **argv) :
 	setApplicationName("CretinsBar");
 	setApplicationVersion("alpha");
 
+	if(argc > 1) {
+		QString filename(argv[1]);
+		_window->load_in_engine(filename);
+	}
+
 	_window->show();
 }
 
