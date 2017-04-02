@@ -50,6 +50,7 @@ set(SOURCES
 	src/SoundUtils/SoundUtils.cpp
 	src/SoundUtils/Wave.cpp
 	src/GUI/MainWindow.cpp
+	src/GUI/WaveForm.cpp
 	src/GUI/qcustomplot/qcustomplot.cpp
 )
 

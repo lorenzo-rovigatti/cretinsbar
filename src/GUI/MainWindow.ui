@@ -16,7 +16,11 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="QCustomPlot" name="plot" native="true"/>
+     <widget class="cb::WaveForm" name="plot" native="true">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QScrollBar" name="plot_scrollbar">
@@ -250,9 +254,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QCustomPlot</class>
+   <class>cb::WaveForm</class>
    <extends>QWidget</extends>
-   <header>qcustomplot.h</header>
+   <header>WaveForm.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

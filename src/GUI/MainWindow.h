@@ -15,7 +15,6 @@ class MainWindow;
 }
 
 class QAudioFormat;
-class QCustomPlot;
 class QCPRange;
 class QCPItemStraightLine;
 class QCPItemRect;
@@ -23,6 +22,7 @@ class QCPItemRect;
 namespace cb {
 
 class Engine;
+class WaveForm;
 
 class MainWindow: public QMainWindow {
 Q_OBJECT
@@ -34,19 +34,12 @@ public:
 	void load_in_engine(QString filename);
 
 public slots:
-	void erase_statusbar(QMouseEvent *event);
 
 private slots:
 	void _on_open();
 	void _toggle_play(bool s);
 	void _stop();
 
-	// plot slots
-	void _play_position_changed(qint64 position);
-	void _x_axis_changed(const QCPRange &range);
-	void _plot_scrollbar_changed(int value);
-	void _plot_on_mouse_press(QMouseEvent *event);
-	void _plot_on_mouse_move(QMouseEvent *event);
 	void _plot_on_mouse_release(QMouseEvent *event);
 
 	void _engine_playing();
@@ -60,9 +53,7 @@ private:
 	Ui::MainWindow *_ui;
 
 	QPoint _press_pos;
-	QCustomPlot *_plot;
-	QCPItemStraightLine *_position;
-	QCPItemRect *_selection;
+	WaveForm *_plot;
 	void _init_plot();
 };
 
