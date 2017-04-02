@@ -52,6 +52,7 @@ private slots:
 	void _engine_playing();
 	void _engine_paused();
 	void _engine_stopped();
+	void _engine_at_end();
 
 private:
 	const QString _pos_layer;

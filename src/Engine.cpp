@@ -20,7 +20,7 @@ Engine::Engine(QObject *parent) :
 				QObject(parent),
 				_audio_output_device(QAudioDeviceInfo::defaultOutputDevice()),
 				_audio_output(nullptr),
-				_base_time(0),
+				_start_from_time(0),
 				_play_time(0),
 				_volume(1.0),
 				_curr_tempo_change(0.0),
@@ -51,13 +51,14 @@ const QByteArray *Engine::load(const QString &filename) {
 	return _out_file->data();
 }
 
-void Engine::seek(qint64 us) {
+void Engine::set_boundaries(qint64 start_us, qint64 end_us) {
 	if(is_ready()) {
 		stop();
 
-		_seek_buffer(us);
-		_base_time = us;
-		emit play_position_changed(_base_time);
+		_seek_buffer(start_us);
+		_start_from_time = start_us;
+		_end_at_time = (end_us > 0) ? end_us : duration()*1000000;
+		emit play_position_changed(_start_from_time);
 	}
 }
 
@@ -101,7 +102,7 @@ void Engine::_reset() {
 		delete _audio_output;
 		_audio_output = nullptr;
 	}
-	_base_time = 0;
+	_start_from_time = 0;
 	_set_play_time(0);
 }
 
@@ -111,10 +112,10 @@ void Engine::play(qreal tempo_change, int pitch_change) {
 			_curr_tempo_change = tempo_change;
 			_curr_pitch_change = pitch_change;
 			_process(tempo_change, pitch_change);
-			_seek_buffer(_base_time);
+			_seek_buffer(_start_from_time);
 		}
 
-		if(_audio_output_IO_device.atEnd()) _seek_buffer(_base_time);
+		if(_audio_output_IO_device.atEnd()) _seek_buffer(_start_from_time);
 		if(_audio_output->state() == QAudio::SuspendedState) _audio_output->resume();
 		else _audio_output->start(&_audio_output_IO_device);
 	}
@@ -129,7 +130,7 @@ void Engine::pause() {
 void Engine::stop() {
 	if(is_ready()) {
 		_audio_output->stop();
-		_seek_buffer(_base_time);
+		_seek_buffer(_start_from_time);
 		_set_play_time(0);
 	}
 }
@@ -176,22 +177,29 @@ qint64 Engine::_from_real_to_original_time(qint64 pos) {
 }
 
 void Engine::_audio_notify() {
-	qint64 original_time = _from_real_to_original_time(_audio_output->processedUSecs());
-	_set_play_time(original_time);
+	qint64 elapsed_time = _from_real_to_original_time(_audio_output->processedUSecs());
+	_set_play_time(elapsed_time);
 }
 
-void Engine::_set_play_time(qint64 time) {
-	qint64 new_time = _base_time + time;
-	const bool changed = (_play_time != new_time);
-	_play_time = _base_time + time;
-	if(changed) emit play_position_changed(_play_time);
+void Engine::_set_play_time(qint64 elapsed_time) {
+	if(elapsed_time < 0) elapsed_time = 0;
+	qint64 new_time = _start_from_time + elapsed_time;
+	if(new_time >= _end_at_time) {
+		stop();
+		emit ended();
+	}
+	else {
+		const bool changed = (_play_time != new_time);
+		_play_time = _start_from_time + elapsed_time;
+		if(changed) emit play_position_changed(_play_time);
+	}
 }
 
 void Engine::_process(qreal tempo_change, int pitch_change) {
 	_out_file = SoundUtils::Instance()->process(*_wav_file, tempo_change, pitch_change);
 
 	qDebug() << _out_file->get_n_samples() << _wav_file->get_n_samples();
-	qDebug() << _out_file->bytes_from_us(_base_time) << _wav_file->bytes_from_us(_base_time);
+	qDebug() << _out_file->bytes_from_us(_start_from_time) << _wav_file->bytes_from_us(_start_from_time);
 
 	_audio_output_IO_device.close();
 	_audio_output_IO_device.setBuffer(_out_file->data());

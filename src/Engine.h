@@ -30,7 +30,7 @@ public:
 	virtual ~Engine();
 
 	const QByteArray *load(const QString &filename);
-	void seek(qint64 us);
+	void set_boundaries(qint64 start_us, qint64 end_us);
 	void set_volume(qreal new_volume);
 
 	int channel_count();
@@ -61,6 +61,7 @@ signals:
 	void playing();
 	void paused();
 	void stopped();
+	void ended();
 
 private:
 	void _reset();
@@ -86,8 +87,10 @@ private:
     std::unique_ptr<Wave> _wav_file, _out_file;
     QByteArray _data;
 
-    /// Base play position (in microseconds of the original stream).
-    qint64 _base_time;
+    /// Starting play position (in microseconds of the original stream).
+    qint64 _start_from_time;
+    /// Ending play position (in microseconds of the original stream).
+    qint64 _end_at_time;
     /// Current play position (in microseconds of the original stream).
     qint64 _play_time;
     qreal _volume;

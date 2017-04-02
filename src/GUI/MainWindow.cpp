@@ -31,6 +31,7 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	connect(_engine, &Engine::playing, this, &MainWindow::_engine_playing);
 	connect(_engine, &Engine::paused, this, &MainWindow::_engine_paused);
 	connect(_engine, &Engine::stopped, this, &MainWindow::_engine_stopped);
+	connect(_engine, &Engine::ended, this, &MainWindow::_engine_at_end);
 
 	connect(_ui->play_button, &QPushButton::toggled, this, &MainWindow::_toggle_play);
 	connect(_ui->stop_button, &QPushButton::clicked, this, &MainWindow::_stop);
@@ -53,6 +54,7 @@ void MainWindow::load_in_engine(QString filename) {
 	this->setEnabled(false);
 	_ui->play_button->setEnabled(false);
 	_ui->stop_button->setEnabled(false);
+	_ui->loop_button->setEnabled(false);
 	_ui->pitch_slider->setEnabled(false);
 	_ui->tempo_slider->setEnabled(false);
 	_ui->plot_scrollbar->setEnabled(false);
@@ -90,6 +92,7 @@ void MainWindow::load_in_engine(QString filename) {
 
 	_ui->play_button->setEnabled(true);
 	_ui->stop_button->setEnabled(true);
+	_ui->loop_button->setEnabled(true);
 	_ui->pitch_slider->setEnabled(true);
 	_ui->tempo_slider->setEnabled(true);
 	_ui->plot_scrollbar->setEnabled(true);
@@ -131,16 +134,17 @@ void MainWindow::_plot_on_mouse_press(QMouseEvent *event) {
 }
 
 void MainWindow::_plot_on_mouse_release(QMouseEvent *event) {
-	qreal starting_x;
+	qreal start_us;
+	qreal end_us = -1.;
 	if(_selection->visible()) {
-		starting_x = _selection->topLeft->coords().x();
+		start_us = _selection->topLeft->coords().x()*1000000;
+		end_us = _selection->bottomRight->coords().x()*1000000;
 	}
 	else {
-		starting_x = _plot->xAxis->pixelToCoord(event->pos().x());
+		start_us = _plot->xAxis->pixelToCoord(event->pos().x())*1000000;
 	}
 
-	qint64 starting_us = starting_x * 1000000;
-	_engine->seek(starting_us);
+	_engine->set_boundaries(start_us, end_us);
 }
 
 void MainWindow::_plot_on_mouse_move(QMouseEvent *event) {
@@ -185,6 +189,11 @@ void MainWindow::_engine_stopped() {
 	_ui->play_button->setChecked(false);
 	_ui->play_button->setText("Play");
 }
+
+void MainWindow::_engine_at_end() {
+	if(_ui->loop_button->isChecked()) _ui->play_button->click();
+}
+
 
 void MainWindow::_x_axis_changed(const QCPRange &range) {
 	// make sure that we do not zoom out too much
