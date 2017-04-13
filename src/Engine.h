@@ -29,9 +29,10 @@ public:
 	Engine(QObject *parent);
 	virtual ~Engine();
 
-	const QByteArray *load(const QString &filename);
+	void load(const QString &filename);
 	void set_boundaries(qint64 start_us, qint64 end_us);
 	void set_volume(qreal new_volume);
+	const QByteArray *data();
 
 	int channel_count();
 	int sample_size();
@@ -85,7 +86,6 @@ private:
 	QAudioFormat _audio_format;
     QBuffer _audio_output_IO_device;
     std::unique_ptr<Wave> _wav_file, _out_file;
-    QByteArray _data;
 
     /// Starting play position (in microseconds of the original stream).
     qint64 _start_from_time;

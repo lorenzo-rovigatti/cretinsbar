@@ -47,52 +47,12 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::load_in_engine(QString filename) {
-	this->setEnabled(false);
-	_ui->plot->setEnabled(false);
-	_ui->play_button->setEnabled(false);
-	_ui->stop_button->setEnabled(false);
-	_ui->loop_button->setEnabled(false);
-	_ui->pitch_slider->setEnabled(false);
-	_ui->tempo_slider->setEnabled(false);
-	_ui->plot_scrollbar->setEnabled(false);
+	_set_all_enabled(false);
 
-	const QByteArray *buffer =_engine->load(filename);
-	qint64 length = buffer->length();
-	_plot->clearGraphs();
-	int bytes = _engine->sample_size() / 8;
-	long n_samples = length / bytes;
-	qreal length_in_seconds = _engine->duration();
-	long increment = _engine->channel_count();
+	_engine->load(filename);
+	_plot->load_wave(_engine);
 
-	const short *samples = reinterpret_cast<const short *>(buffer->data());
-	QVector<qreal> x_data(n_samples);
-	QVector<qreal> y_data(n_samples);
-	for(int i = 0; i < n_samples; i += increment) {
-		int idx = i / increment;
-		x_data[idx] = idx / (qreal) _engine->sample_rate();
-		y_data[idx] = (qreal) samples[i];
-	}
-
-	QCPGraph *graph = _plot->addGraph();
-	graph->setPen(QPen(QColor("black")));
-	graph->setData(x_data, y_data);
-	_ui->plot_scrollbar->setRange(0, length_in_seconds);
-	_plot->xAxis->setRange(0, length_in_seconds);
-
-	long max_val = 2 << (_engine->sample_size() - 2);
-	long min_val = (_engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
-	_plot->yAxis->setRange(min_val, max_val);
-
-	_plot->replot();
-
-	_ui->play_button->setEnabled(true);
-	_ui->stop_button->setEnabled(true);
-	_ui->loop_button->setEnabled(true);
-	_ui->pitch_slider->setEnabled(true);
-	_ui->tempo_slider->setEnabled(true);
-	_ui->plot_scrollbar->setEnabled(true);
-	_plot->setEnabled(true);
-	this->setEnabled(true);
+	_set_all_enabled(true);
 }
 
 void MainWindow::_on_open() {
@@ -146,6 +106,17 @@ void MainWindow::_init_plot() {
 
 	connect(_plot, &QCustomPlot::mouseRelease, this, &MainWindow::_plot_on_mouse_release);
 	connect(_plot, SIGNAL(status_update(QString)), _ui->statusbar, SLOT(showMessage(QString)));
+}
+
+void MainWindow::_set_all_enabled(bool state) {
+	this->setEnabled(state);
+	_ui->plot->setEnabled(state);
+	_ui->play_button->setEnabled(state);
+	_ui->stop_button->setEnabled(state);
+	_ui->loop_button->setEnabled(state);
+	_ui->pitch_slider->setEnabled(state);
+	_ui->tempo_slider->setEnabled(state);
+	_ui->plot_scrollbar->setEnabled(state);
 }
 
 } /* namespace cb */

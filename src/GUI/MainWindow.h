@@ -55,6 +55,7 @@ private:
 	QPoint _press_pos;
 	WaveForm *_plot;
 	void _init_plot();
+	void _set_all_enabled(bool state);
 };
 
 } /* namespace cb */

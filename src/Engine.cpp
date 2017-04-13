@@ -21,6 +21,7 @@ Engine::Engine(QObject *parent) :
 				_audio_output_device(QAudioDeviceInfo::defaultOutputDevice()),
 				_audio_output(nullptr),
 				_start_from_time(0),
+				_end_at_time(-1),
 				_play_time(0),
 				_volume(1.0),
 				_curr_tempo_change(0.0),
@@ -31,7 +32,7 @@ Engine::~Engine() {
 
 }
 
-const QByteArray *Engine::load(const QString &filename) {
+void Engine::load(const QString &filename) {
 	_reset();
 
 	_wav_file = std::unique_ptr<Wave>(new Wave(filename));
@@ -44,10 +45,13 @@ const QByteArray *Engine::load(const QString &filename) {
 
 	_audio_output = new QAudioOutput(_audio_output_device, _audio_format, this);
 	_audio_output->setNotifyInterval(10);
-//	_audio_output->setBufferSize(_out_file->data()->size());
 	connect(_audio_output, &QAudioOutput::stateChanged, this, &Engine::_handle_state_changed);
 	connect(_audio_output, &QAudioOutput::notify, this, &Engine::_audio_notify);
 
+	set_boundaries(0, -1);
+}
+
+const QByteArray *Engine::data() {
 	return _out_file->data();
 }
 
@@ -103,6 +107,7 @@ void Engine::_reset() {
 		_audio_output = nullptr;
 	}
 	_start_from_time = 0;
+	_end_at_time = -1;
 	_set_play_time(0);
 }
 
@@ -184,7 +189,7 @@ void Engine::_audio_notify() {
 void Engine::_set_play_time(qint64 elapsed_time) {
 	if(elapsed_time < 0) elapsed_time = 0;
 	qint64 new_time = _start_from_time + elapsed_time;
-	if(new_time >= _end_at_time) {
+	if(_end_at_time >= 0 && new_time >= _end_at_time) {
 		stop();
 		emit ended();
 	}
