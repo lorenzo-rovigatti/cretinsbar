@@ -13,6 +13,7 @@
 namespace cb {
 
 using pair_qreal = QPair<qreal, qreal>;
+class Engine;
 
 class WaveForm: public QCustomPlot {
 	Q_OBJECT;
@@ -23,6 +24,7 @@ public:
 
 	void init(QScrollBar *scrollbar);
 	pair_qreal selection_boundaries();
+	void load_wave(Engine *engine);
 
 public slots:
 	void update_play_position(qint64 position);
@@ -48,6 +50,15 @@ private:
 
 	QPoint _press_pos;
 	pair_qreal _sel_boundaries;
+
+	qreal MOVE_SEL_THRESHOLD;
+	qreal SET_SEL_THRESHOLD;
+	enum sel_moving_type {
+		NO_MOVING,
+		MOVE_LEFT,
+		MOVE_RIGHT
+	};
+	int _sel_moving_type;
 };
 
 } /* namespace cb */
