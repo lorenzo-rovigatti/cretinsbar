@@ -35,7 +35,6 @@ void WaveForm::init(QScrollBar *scrollbar) {
 	xAxis->setTickLabels(true);
 	xAxis->setBasePen(Qt::NoPen);
 
-	yAxis->setTickLabels(false);
 	yAxis->setTicks(false);
 	yAxis->grid()->setVisible(false);
 	yAxis->setBasePen(Qt::NoPen);
@@ -76,27 +75,35 @@ void WaveForm::load_wave(Engine *engine) {
 	clearGraphs();
 	int bytes = engine->sample_size() / 8;
 	long n_samples = length / bytes;
+	int n_channels = engine->channel_count();
 	qreal length_in_seconds = engine->duration();
-	long increment = engine->channel_count();
-
-	const short *samples = reinterpret_cast<const short *>(buffer->data());
-	QVector<qreal> x_data(n_samples);
-	QVector<qreal> y_data(n_samples);
-	for(int i = 0; i < n_samples; i += increment) {
-		int idx = i / increment;
-		x_data[idx] = idx / (qreal) engine->sample_rate();
-		y_data[idx] = (qreal) samples[i];
-	}
-
-	QCPGraph *graph = addGraph();
-	graph->setPen(QPen(QColor("black")));
-	graph->setData(x_data, y_data);
-	_scrollbar->setRange(0, length_in_seconds);
-	xAxis->setRange(0, length_in_seconds);
-
+	long increment = n_channels;
 	long max_val = 2 << (engine->sample_size() - 2);
 	long min_val = (engine->sample_type() == QAudioFormat::UnSignedInt) ? 0 : -max_val;
-	yAxis->setRange(min_val, max_val);
+	long max_interval = max_val - min_val;
+
+	const short *samples = reinterpret_cast<const short *>(buffer->data());
+
+	// add to the plot a graph for each channel
+	long n_samples_per_channel = n_samples / n_channels;
+	QVector<qreal> x_data(n_samples_per_channel);
+	QVector<qreal> y_data(n_samples_per_channel);
+	for(int channel = 0; channel < n_channels; channel++) {
+		int idx = 0;
+		for(int i = channel; i < n_samples; i += increment, idx++) {
+			x_data[idx] = idx / (qreal) engine->sample_rate();
+			// shift each plot up
+			y_data[idx] = (qreal) (samples[i] + channel*max_interval);
+		}
+
+		QCPGraph *graph = addGraph();
+		graph->setPen(QPen(QColor("black")));
+		graph->setData(x_data, y_data, true);
+	}
+
+	_scrollbar->setRange(0, length_in_seconds);
+	xAxis->setRange(0, length_in_seconds);
+	yAxis->setRange(min_val, min_val + max_interval*n_channels);
 
 	replot();
 }
@@ -148,10 +155,11 @@ void WaveForm::_on_mouse_press(QMouseEvent *event) {
 
 void WaveForm::_on_mouse_move(QMouseEvent *event) {
 	QString msg;
-	qreal x = xAxis->pixelToCoord(event->pos().x());
+	int x_pixel = event->pos().x();
+	qreal x_coord = xAxis->pixelToCoord(x_pixel);
 	if(isEnabled()) {
 		// transform the mouse position to x,y coordinates and show them in the status bar
-		msg = QString("%1 s").arg(x, 0, 'f', 2);
+		msg = QString("%1 s").arg(x_coord, 0, 'f', 2);
 	}
 	emit status_update(msg);
 
@@ -165,20 +173,20 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 			switch(_sel_moving_type) {
 			case sel_moving_type::MOVE_RIGHT:
 				left_pos = _selection->topLeft->coords().x();
-				right_pos = x;
+				right_pos = x_coord;
 				break;
 			case sel_moving_type::MOVE_LEFT:
-				left_pos = x;
+				left_pos = x_coord;
 				right_pos = _selection->bottomRight->coords().x();
 				break;
 			default:
 			case sel_moving_type::NO_MOVING:
 				if(pixel_diff > 0) {
 					left_pos = xAxis->pixelToCoord(_press_pos.x());
-					right_pos = x;
+					right_pos = x_coord;
 				}
 				else {
-					left_pos = x;
+					left_pos = x_coord;
 					right_pos = xAxis->pixelToCoord(_press_pos.x());
 				}
 				break;
@@ -208,14 +216,13 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 	else {
 		qreal left_x_pos = xAxis->coordToPixel(_selection->topLeft->coords().x());
 		qreal right_x_pos = xAxis->coordToPixel(_selection->bottomRight->coords().x());
-		qreal event_x = event->pos().x();
 		// if the cursor is close to either edge, we change the cursor shape and remember
 		// which edge is close to
-		if(fabs(event_x - left_x_pos) < MOVE_SEL_THRESHOLD) {
+		if(fabs(x_pixel - left_x_pos) < MOVE_SEL_THRESHOLD) {
 			this->setCursor(QCursor(Qt::CursorShape::SplitHCursor));
 			_sel_moving_type = sel_moving_type::MOVE_LEFT;
 		}
-		else if(fabs(event_x - right_x_pos) < MOVE_SEL_THRESHOLD) {
+		else if(fabs(x_pixel - right_x_pos) < MOVE_SEL_THRESHOLD) {
 			this->setCursor(QCursor(Qt::CursorShape::SplitHCursor));
 			_sel_moving_type = sel_moving_type::MOVE_RIGHT;
 		}

@@ -203,9 +203,6 @@ void Engine::_set_play_time(qint64 elapsed_time) {
 void Engine::_process(qreal tempo_change, int pitch_change) {
 	_out_file = SoundUtils::Instance()->process(*_wav_file, tempo_change, pitch_change);
 
-	qDebug() << _out_file->get_n_samples() << _wav_file->get_n_samples();
-	qDebug() << _out_file->bytes_from_us(_start_from_time) << _wav_file->bytes_from_us(_start_from_time);
-
 	_audio_output_IO_device.close();
 	_audio_output_IO_device.setBuffer(_out_file->data());
 	_audio_output_IO_device.open(QIODevice::ReadOnly);
