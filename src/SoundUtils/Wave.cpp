@@ -56,11 +56,6 @@ Wave::Wave(const QString &filename) throw (std::exception) {
 
 	if(_fmt.wFormatTag != 1) {
 		throw std::runtime_error("Only wav files with format tag == 1 are supported");
-		/*file.read(reinterpret_cast<char*>(&extra_param_length_), 2); //2 bytes
-		 if(extra_param_length_ > 0) {
-		 extra_param_.resize(extra_param_length_);
-		 file.read(&extra_param_[0], extra_param_length_);
-		 }*/
 	}
 
 	if(get_bytes_per_sample() != 2) {

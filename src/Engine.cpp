@@ -13,6 +13,9 @@
 #include <QAudioOutput>
 #include <QFile>
 #include <QAudioFormat>
+#include <QFileInfo>
+
+#include <mpg123.h>
 
 namespace cb {
 
@@ -26,16 +29,55 @@ Engine::Engine(QObject *parent) :
 				_volume(1.0),
 				_curr_tempo_change(0.0),
 				_curr_pitch_change(0) {
+
+	mpg123_init();
 }
 
 Engine::~Engine() {
+	mpg123_exit();
+}
 
+void Engine::_load_wave(const QString &filename) {
+	_wav_file = std::unique_ptr<Wave>(new Wave(filename));
+}
+
+void Engine::_load_mp3(const QString &filename) {
+	int m_err;
+	mpg123_handle *mh = mpg123_new(NULL, &m_err);
+	size_t buffer_size = mpg123_outblock(mh);
+	int m_res = mpg123_open(mh, filename.toStdString().c_str());
+	if(m_res == MPG123_OK) {
+		int channels, encoding;
+		long rate;
+		mpg123_getformat(mh, &rate, &channels, &encoding);
+
+		// encsize returns the size in bytes
+		int bits = mpg123_encsize(encoding)*8;
+		_wav_file = std::unique_ptr<Wave>(new Wave(channels, rate, bits));
+
+		size_t done;
+		unsigned char *buffer = new unsigned char[buffer_size];
+		while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK) {
+			_wav_file->append_samples((char *) buffer, buffer_size);
+		}
+
+		mpg123_close(mh);
+		mpg123_delete(mh);
+	}
 }
 
 void Engine::load(const QString &filename) {
 	_reset();
 
-	_wav_file = std::unique_ptr<Wave>(new Wave(filename));
+	QFileInfo file_info(filename);
+	QString extension = file_info.completeSuffix();
+	if(extension == "wav") _load_wave(filename);
+	else if(extension == "mp3") _load_mp3(filename);
+	else {
+		QString error = QString("Unsupported file extension '%1'").arg(extension);
+		throw std::runtime_error(error.toStdString());
+	}
+
 	_audio_format = _wav_file->format();
 
 	_out_file = std::unique_ptr<Wave>(new Wave(*_wav_file));

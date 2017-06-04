@@ -49,9 +49,9 @@ public:
 
 	void append_samples(const float *samples, int n_samples);
 	void append_samples(const QByteArray &samples);
-	void append_samples(const char* samples, int size);
+	void append_samples(const char *samples, int size);
 	void append_samples(const QByteArray &samples_l, const QByteArray &samples_r);
-	void append_samples(const char* samples_l, const char* samples_r, int size);
+	void append_samples(const char* samples_l, const char *samples_r, int size);
 
 	void save(const QString &filename);
 

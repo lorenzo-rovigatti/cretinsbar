@@ -65,6 +65,8 @@ signals:
 	void ended();
 
 private:
+	void _load_wave(const QString &filename);
+	void _load_mp3(const QString &filename);
 	void _reset();
 	void _seek_buffer(qint64 new_time);
 	qint64 _from_original_to_real_time(qint64 time);
