@@ -26,8 +26,11 @@ If the compilation is successful, the cretinsbar executable will be placed in th
 * Add support for flac, ogg, etc.
 
 ## Tentative roadmap
+* Add save/load facilities
+* Add support for more formats
 
 ## Acknowledgements
+* The wave form widget is based on [QCustomPlot](http://qcustomplot.com/)
 * The SoundUtils class is heavily based on what I have found [here](http://www.morethantechnical.com/2014/10/13/touch-your-sound-with-soundtouch-wcode/)
 * The FindSoundTouch.cmake file is from the [pcsx2](http://pcsx2.net/) project
 * The Findmpg123.cmake file is from the [zdoom](https://github.com/rheit/zdoom) project

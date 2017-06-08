@@ -76,8 +76,8 @@ std::unique_ptr<Wave> SoundUtils::process(Wave &in_file, float tempo_change, int
 		} while(samples_per_channel != 0);
 	}
 
-	// Now the input file is processed, yet 'flush' few last samples that are
-	// hiding in the SoundTouch's internal processing pipeline.
+	// Even though the input file has been processed, we still have to 'flush' the few last
+	// samples that might be hidden in the SoundTouch's internal processing pipeline.
 	pSoundTouch.flush();
 	do {
 		samples_per_channel = pSoundTouch.receiveSamples(sampleBuffer, buffSizeSamples);
