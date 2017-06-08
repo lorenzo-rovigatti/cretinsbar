@@ -213,7 +213,7 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 	}
 	// if no buttons were pressed we check whether the mouse is close to one of the edges
 	// of the selection rectangle
-	else {
+	else if(_selection->visible()){
 		qreal left_x_pos = xAxis->coordToPixel(_selection->topLeft->coords().x());
 		qreal right_x_pos = xAxis->coordToPixel(_selection->bottomRight->coords().x());
 		// if the cursor is close to either edge, we change the cursor shape and remember
