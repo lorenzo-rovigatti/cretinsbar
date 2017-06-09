@@ -156,10 +156,11 @@ void Engine::_reset() {
 void Engine::play(qreal tempo_change, int pitch_change) {
 	if(is_ready() && _audio_output->state() != QAudio::ActiveState) {
 		if(tempo_change != _curr_tempo_change || pitch_change != _curr_pitch_change) {
+			stop();
 			_curr_tempo_change = tempo_change;
 			_curr_pitch_change = pitch_change;
 			_process(tempo_change, pitch_change);
-			_seek_buffer(_start_from_time);
+			_seek_buffer(_play_time);
 		}
 
 		if(_audio_output_IO_device.atEnd()) _seek_buffer(_start_from_time);
@@ -185,17 +186,17 @@ void Engine::stop() {
 void Engine::_handle_state_changed(QAudio::State newState) {
 	switch(newState) {
 	case QAudio::StoppedState:
-		emit stopped();
 		// Stopped for other reasons
 		if(_audio_output->error() != QAudio::NoError) {
 			qDebug() << _audio_output->error();
 			if(!_audio_output_IO_device.atEnd()) _audio_output->start(&_audio_output_IO_device);
 		}
 		_set_play_time(0);
+		emit stopped();
 		break;
 	case QAudio::IdleState:
-		emit stopped();
 		_set_play_time(0);
+		emit stopped();
 		break;
 	case QAudio::SuspendedState:
 		emit paused();

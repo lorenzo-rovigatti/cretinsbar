@@ -46,6 +46,7 @@ private:
 
 	const QString _pos_layer;
 	QCPItemStraightLine *_position;
+	QCPItemStraightLine *_beginning_position;
 	QCPItemRect *_selection;
 
 	QPoint _press_pos;

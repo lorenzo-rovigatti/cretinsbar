@@ -12,7 +12,12 @@
 namespace cb {
 
 WaveForm::WaveForm(QWidget *parent) :
-		QCustomPlot(parent), _scrollbar(nullptr), _pos_layer("position_layer"), _position(nullptr), _selection(nullptr) {
+				QCustomPlot(parent),
+				_scrollbar(nullptr),
+				_pos_layer("position_layer"),
+				_position(nullptr),
+				_beginning_position(nullptr),
+				_selection(nullptr) {
 	MOVE_SEL_THRESHOLD = 10;
 	SET_SEL_THRESHOLD = 10;
 	_sel_moving_type = sel_moving_type::NO_MOVING;
@@ -52,9 +57,17 @@ void WaveForm::init(QScrollBar *scrollbar) {
 	_position->point1->setCoords(0, -1);
 	_position->point2->setCoords(0, 1);
 	QPen line_pen(QColor("red"));
-	line_pen.setWidth(3);
+	line_pen.setWidth(2);
 	_position->setPen(line_pen);
 	_position->setLayer(_pos_layer);
+
+	_beginning_position = new QCPItemStraightLine(this);
+	_beginning_position->point1->setCoords(0, -1);
+	_beginning_position->point2->setCoords(0, 1);
+	line_pen.setColor(QColor("blue"));
+	line_pen.setWidth(3);
+	_beginning_position->setPen(line_pen);
+	_beginning_position->setLayer(_pos_layer);
 
 	// setup the scrollbar
 	connect(_scrollbar, &QScrollBar::valueChanged, this, &WaveForm::_plot_scrollbar_changed);
@@ -93,7 +106,7 @@ void WaveForm::load_wave(Engine *engine) {
 		for(int i = channel; i < n_samples; i += increment, idx++) {
 			x_data[idx] = idx / (qreal) engine->sample_rate();
 			// shift each plot up
-			y_data[idx] = (qreal) (samples[i] + channel*max_interval);
+			y_data[idx] = (qreal) (samples[i] + channel * max_interval);
 		}
 
 		QCPGraph *graph = addGraph();
@@ -103,7 +116,7 @@ void WaveForm::load_wave(Engine *engine) {
 
 	_scrollbar->setRange(0, length_in_seconds);
 	xAxis->setRange(0, length_in_seconds);
-	yAxis->setRange(min_val, min_val + max_interval*n_channels);
+	yAxis->setRange(min_val, min_val + max_interval * n_channels);
 
 	replot();
 }
@@ -124,8 +137,7 @@ void WaveForm::_x_axis_changed(const QCPRange &range) {
 		if(range.lower < 0. || range.upper > duration) {
 			QCPRange new_range = range.bounded(0, duration);
 			xAxis->setRange(new_range);
-		}
-		else {
+		} else {
 			// adjust the position of the scroll bar slider
 			_scrollbar->setRange(0, qRound(duration - range.size()));
 			_scrollbar->setValue(qRound(range.center()));
@@ -147,9 +159,10 @@ void WaveForm::_on_mouse_press(QMouseEvent *event) {
 	_press_pos = event->pos();
 
 	if(_sel_moving_type == sel_moving_type::NO_MOVING) {
-		_position->setVisible(false);
 		_selection->setVisible(false);
 	}
+	_position->setVisible(false);
+	_beginning_position->setVisible(false);
 	layer(_pos_layer)->replot();
 }
 
@@ -184,8 +197,7 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 				if(pixel_diff > 0) {
 					left_pos = xAxis->pixelToCoord(_press_pos.x());
 					right_pos = x_coord;
-				}
-				else {
+				} else {
 					left_pos = x_coord;
 					right_pos = xAxis->pixelToCoord(_press_pos.x());
 				}
@@ -198,12 +210,16 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 				qreal tmp = left_pos;
 				left_pos = right_pos;
 				right_pos = tmp;
-				if(_sel_moving_type == sel_moving_type::MOVE_RIGHT) _sel_moving_type = sel_moving_type::MOVE_LEFT;
-				else if(_sel_moving_type == sel_moving_type::MOVE_LEFT) _sel_moving_type = sel_moving_type::MOVE_RIGHT;
+				if(_sel_moving_type == sel_moving_type::MOVE_RIGHT)
+					_sel_moving_type = sel_moving_type::MOVE_LEFT;
+				else if(_sel_moving_type == sel_moving_type::MOVE_LEFT)
+					_sel_moving_type = sel_moving_type::MOVE_RIGHT;
 			}
 			// check boundaries
-			if(left_pos < 0) left_pos = 0;
-			if(right_pos > xAxis->range().upper) right_pos = xAxis->range().upper;
+			if(left_pos < 0)
+				left_pos = 0;
+			if(right_pos > xAxis->range().upper)
+				right_pos = xAxis->range().upper;
 
 			_selection->topLeft->setCoords(left_pos, yAxis->range().upper);
 			_selection->bottomRight->setCoords(right_pos, yAxis->range().lower);
@@ -213,7 +229,7 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 	}
 	// if no buttons were pressed we check whether the mouse is close to one of the edges
 	// of the selection rectangle
-	else if(_selection->visible()){
+	else if(_selection->visible()) {
 		qreal left_x_pos = xAxis->coordToPixel(_selection->topLeft->coords().x());
 		qreal right_x_pos = xAxis->coordToPixel(_selection->bottomRight->coords().x());
 		// if the cursor is close to either edge, we change the cursor shape and remember
@@ -221,12 +237,10 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 		if(fabs(x_pixel - left_x_pos) < MOVE_SEL_THRESHOLD) {
 			this->setCursor(QCursor(Qt::CursorShape::SplitHCursor));
 			_sel_moving_type = sel_moving_type::MOVE_LEFT;
-		}
-		else if(fabs(x_pixel - right_x_pos) < MOVE_SEL_THRESHOLD) {
+		} else if(fabs(x_pixel - right_x_pos) < MOVE_SEL_THRESHOLD) {
 			this->setCursor(QCursor(Qt::CursorShape::SplitHCursor));
 			_sel_moving_type = sel_moving_type::MOVE_RIGHT;
-		}
-		else {
+		} else {
 			this->setCursor(Qt::ArrowCursor);
 			_sel_moving_type = sel_moving_type::NO_MOVING;
 		}
@@ -234,14 +248,17 @@ void WaveForm::_on_mouse_move(QMouseEvent *event) {
 }
 
 void WaveForm::_on_mouse_release(QMouseEvent *event) {
+	double x_coord = xAxis->pixelToCoord(event->pos().x());
 	if(_selection->visible()) {
 		_sel_boundaries.first = _selection->topLeft->coords().x();
 		_sel_boundaries.second = _selection->bottomRight->coords().x();
-	}
-	else {
-		_sel_boundaries.first = xAxis->pixelToCoord(event->pos().x());
+	} else {
+		_sel_boundaries.first = x_coord;
 		_sel_boundaries.second = -1;
 	}
+	_beginning_position->point1->setCoords(x_coord, -1);
+	_beginning_position->point2->setCoords(x_coord, +1);
+	_beginning_position->setVisible(true);
 }
 
 void WaveForm::leaveEvent(QEvent *event) {
