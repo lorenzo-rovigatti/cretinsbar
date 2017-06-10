@@ -7,7 +7,6 @@
 
 #include "SoundUtils.h"
 
-#include "WavFile.h"
 #include "Wave.h"
 
 #include <QByteArray>
