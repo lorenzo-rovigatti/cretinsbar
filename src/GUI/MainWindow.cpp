@@ -33,6 +33,9 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	connect(_engine, &Engine::stopped, this, &MainWindow::_engine_stopped);
 	connect(_engine, &Engine::ended, this, &MainWindow::_engine_at_end);
 
+	connect(_ui->tempo_slider, &QSlider::valueChanged, this, &MainWindow::_on_slider_change);
+	connect(_ui->pitch_slider, &QSlider::valueChanged, this, &MainWindow::_on_slider_change);
+
 	connect(_ui->play_button, &QPushButton::toggled, this, &MainWindow::_toggle_play);
 	connect(_ui->stop_button, &QPushButton::clicked, this, &MainWindow::_stop);
 
@@ -98,6 +101,10 @@ void MainWindow::_engine_stopped() {
 
 void MainWindow::_engine_at_end() {
 	if(_ui->loop_button->isChecked()) _ui->play_button->click();
+}
+
+void MainWindow::_on_slider_change() {
+	if(_engine->is_playing()) _toggle_play(false);
 }
 
 void MainWindow::_init_plot() {

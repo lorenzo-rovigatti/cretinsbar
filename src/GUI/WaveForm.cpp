@@ -256,8 +256,9 @@ void WaveForm::_on_mouse_release(QMouseEvent *event) {
 		_sel_boundaries.first = x_coord;
 		_sel_boundaries.second = -1;
 	}
-	_beginning_position->point1->setCoords(x_coord, -1);
-	_beginning_position->point2->setCoords(x_coord, +1);
+
+	_beginning_position->point1->setCoords(_sel_boundaries.first, -1);
+	_beginning_position->point2->setCoords(_sel_boundaries.first, +1);
 	_beginning_position->setVisible(true);
 }
 

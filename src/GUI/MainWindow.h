@@ -47,6 +47,8 @@ private slots:
 	void _engine_stopped();
 	void _engine_at_end();
 
+	void _on_slider_change();
+
 private:
 	const QString _pos_layer;
 	Engine *_engine;
