@@ -2,12 +2,12 @@
 Cretin's Bar is an open-source program for music transcription/play-along practice written in qt5/c++. The general idea behind the program comes from the fully-featured, highly professional commercial software [Transcribe!](https://www.seventhstring.com/xscribe/overview.html). Cretin's Bar wants to be a stripped-down, much less featured version of it, mostly useful for practice. 
 
 ## Installation
-Cretin's Bar requires cmake, qt5, libmpg123 and SoundTouch. On Ubuntu (or any Debian-derived distro, I believe) this boils down to installing
+Cretin's Bar requires cmake, qt5 and SoundTouch. Optional mp3 support is provided by mpg123. On Ubuntu (or any Debian-derived distro, I believe) this boils down to installing
 * cmake
 * qtbase5-dev
 * qtmultimedia5-dev
 * libsoundtouch-dev
-* libmpg123-dev
+* libmpg123-dev (optional)
 
 Once all the dependencies are met, the code can be compiled as follows:
 * ``$ mkdir build``

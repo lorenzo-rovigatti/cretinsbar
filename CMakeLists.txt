@@ -30,7 +30,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Multimedia REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(SoundTouch REQUIRED)
-find_package(mpg123 REQUIRED)
+find_package(mpg123)
 
 # The Qt5Widgets_INCLUDES also includes the include directories for dependencies QtCore and QtGui
 include_directories(${Qt5Widgets_INCLUDES})
@@ -38,6 +38,22 @@ include_directories(${Qt5Widgets_INCLUDES})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/GUI ${CMAKE_CURRENT_SOURCE_DIR}/src/GUI/qcustomplot)
 
 set(QT5_LIBRARIES Qt5::Widgets Qt5::Multimedia Qt5::PrintSupport)
+
+set(LIBRARIES
+	${QT5_LIBRARIES}
+	${SOUNDTOUCH_LIBRARIES}
+)
+
+if(MPG123_FOUND)
+	message(STATUS "mpg123 found: enabling mp3 support")
+	set(LIBRARIES
+		${LIBRARIES}
+		${MPG123_LIBRARIES}
+	)
+else()
+	message(STATUS "mpg123 not found: disabling mp3 support")
+	add_definitions(-DNOMP3)
+endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
@@ -65,4 +81,4 @@ qt5_add_resources(UI_GENERATED_RESOURCES ${UI_RESOURCES})
 
 add_executable(cretinsbar ${SOURCES} ${UI_GENERATED_HEADERS} ${UI_GENERATED_RESOURCES})
 
-target_link_libraries(cretinsbar ${QT5_LIBRARIES} ${SOUNDTOUCH_LIBRARIES} ${MPG123_LIBRARIES})
+target_link_libraries(cretinsbar ${LIBRARIES})

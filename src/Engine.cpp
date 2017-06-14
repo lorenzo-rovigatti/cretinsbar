@@ -15,7 +15,9 @@
 #include <QAudioFormat>
 #include <QFileInfo>
 
+#ifndef NOMP3
 #include <mpg123.h>
+#endif
 
 namespace cb {
 
@@ -30,18 +32,22 @@ Engine::Engine(QObject *parent) :
 				_curr_tempo_change(0.0),
 				_curr_pitch_change(0) {
 
-	mpg123_init();
 }
 
 Engine::~Engine() {
-	mpg123_exit();
+
 }
 
 void Engine::_load_wave(const QString &filename) {
 	_wav_file = std::unique_ptr<Wave>(new Wave(filename));
 }
 
+// TODO: mpg123_init() and mpg123_exit() could be moved to the costructor and the destructor if their presence
+// here has a too big impact on performance
 void Engine::_load_mp3(const QString &filename) {
+#ifndef NOMP3
+	mpg123_init();
+
 	int m_err;
 	mpg123_handle *mh = mpg123_new(NULL, &m_err);
 	size_t buffer_size = mpg123_outblock(mh);
@@ -64,6 +70,9 @@ void Engine::_load_mp3(const QString &filename) {
 		mpg123_close(mh);
 		mpg123_delete(mh);
 	}
+
+	mpg123_exit();
+#endif
 }
 
 void Engine::load(const QString &filename) {
@@ -72,7 +81,9 @@ void Engine::load(const QString &filename) {
 	QFileInfo file_info(filename);
 	QString extension = file_info.completeSuffix();
 	if(extension == "wav") _load_wave(filename);
+#ifndef NOMP3
 	else if(extension == "mp3") _load_mp3(filename);
+#endif
 	else {
 		QString error = QString("Unsupported file extension '%1'").arg(extension);
 		throw std::runtime_error(error.toStdString());
