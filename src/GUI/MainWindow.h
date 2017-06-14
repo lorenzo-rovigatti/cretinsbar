@@ -37,6 +37,8 @@ public slots:
 
 private slots:
 	void _on_open();
+	void _export_all();
+
 	void _toggle_play(bool s);
 	void _stop();
 
@@ -57,7 +59,9 @@ private:
 	QPoint _press_pos;
 	WaveForm *_plot;
 	void _init_plot();
-	void _set_all_enabled(bool state);
+	void _reset_controls();
+	void _set_controls_state(bool state);
+	static QString _supported_files_filter();
 };
 
 } /* namespace cb */

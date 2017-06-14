@@ -78,8 +78,7 @@ void Engine::_load_mp3(const QString &filename) {
 void Engine::load(const QString &filename) {
 	_reset();
 
-	QFileInfo file_info(filename);
-	QString extension = file_info.completeSuffix();
+	QString extension = QFileInfo(filename).completeSuffix();
 	if(extension == "wav") _load_wave(filename);
 #ifndef NOMP3
 	else if(extension == "mp3") _load_mp3(filename);
@@ -150,6 +149,13 @@ bool Engine::is_playing() {
 
 bool Engine::is_ready() {
 	return _audio_output != nullptr;
+}
+
+void Engine::export_all(QString filename) {
+	QString extension = QFileInfo(filename).completeSuffix();
+	if(extension == "wav") {
+		_out_file->save(filename);
+	}
 }
 
 void Engine::_reset() {

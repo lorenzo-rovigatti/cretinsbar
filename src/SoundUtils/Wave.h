@@ -12,9 +12,9 @@
 #include <QByteArray>
 
 #include <string>
-#include <vector>       // std::vector
-#include <stdint.h>     // int32_t, int16_t
-#include <exception>    // std::exception
+#include <vector>
+#include <stdint.h>
+#include <exception>
 
 namespace cb {
 

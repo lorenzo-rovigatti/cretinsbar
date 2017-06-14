@@ -43,6 +43,8 @@ public:
 	bool is_playing();
 	bool is_ready();
 
+	void export_all(QString filename);
+
 public slots:
 	void play(qreal tempo_change, int pitch_change);
 	void pause();

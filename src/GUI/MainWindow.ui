@@ -225,17 +225,25 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>29</height>
+     <height>34</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menu_file">
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
+    <widget class="QMenu" name="menu_export">
+     <property name="title">
+      <string>Export</string>
+     </property>
+     <addaction name="action_export_all"/>
+     <addaction name="action_export_selection"/>
+    </widget>
     <addaction name="action_open"/>
+    <addaction name="menu_export"/>
     <addaction name="action_exit"/>
    </widget>
-   <addaction name="menuFile"/>
+   <addaction name="menu_file"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_exit">
@@ -249,6 +257,19 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="action_export_all">
+   <property name="text">
+    <string>All</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="action_export_selection">
+   <property name="text">
+    <string>Selection</string>
    </property>
   </action>
  </widget>

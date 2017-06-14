@@ -12,6 +12,7 @@
 #include "../SoundUtils/SoundUtils.h"
 #include "WaveForm.h"
 
+#include <QStringList>
 #include <QAudioFormat>
 
 namespace cb {
@@ -25,6 +26,7 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	_init_plot();
 
 	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_on_open);
+	connect(_ui->action_export_all, &QAction::triggered, this, &MainWindow::_export_all);
 
 	connect(_engine, &Engine::play_position_changed, _plot, &WaveForm::update_play_position);
 
@@ -43,6 +45,8 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	for(int i = 0; i < _ui->slider_layout->rowCount(); i++) {
 		_ui->slider_layout->itemAtPosition(i, 0)->setAlignment(Qt::AlignRight);
 	}
+
+	_set_controls_state(false);
 }
 
 MainWindow::~MainWindow() {
@@ -50,24 +54,45 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::load_in_engine(QString filename) {
-	_set_all_enabled(false);
+	this->setEnabled(false);
+	_reset_controls();
 
 	_engine->load(filename);
 	_plot->load_wave(_engine);
 
-	_set_all_enabled(true);
+	this->setEnabled(true);
+	_set_controls_state(true);
+}
+
+QString MainWindow::_supported_files_filter() {
+	QStringList list;
+	list.append(tr("All files(*.*)"));
+	list.append(tr("\nWAV files(*.wav)"));
+#ifndef NOMP3
+	list.append(tr("\nmp3 files(*.mp3)"));
+#endif
+
+	return list.join('\n');
 }
 
 void MainWindow::_on_open() {
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open file"), "", tr("WAV files(*.wav)"));
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open file"), "", _supported_files_filter());
 	if(filename.size() > 0) load_in_engine(filename);
+}
+
+void MainWindow::_export_all() {
+	QString filename = QFileDialog::getSaveFileName(this, tr("Export as"), "", _supported_files_filter());
+	if(filename.size() > 0) _engine->export_all(filename);
 }
 
 void MainWindow::_toggle_play(bool s) {
 	if(s) {
 		qreal tempo_change = (qreal) _ui->tempo_slider->value() - 100.;
 		int pitch_change = _ui->pitch_slider->value();
+
+		this->setEnabled(false);
 		_engine->play(tempo_change, pitch_change);
+		this->setEnabled(true);
 	}
 	else _engine->pause();
 }
@@ -115,8 +140,13 @@ void MainWindow::_init_plot() {
 	connect(_plot, SIGNAL(status_update(QString)), _ui->statusbar, SLOT(showMessage(QString)));
 }
 
-void MainWindow::_set_all_enabled(bool state) {
-	this->setEnabled(state);
+void MainWindow::_reset_controls() {
+	_ui->tempo_slider->setSliderPosition(100);
+	_ui->pitch_slider->setSliderPosition(0);
+	_ui->loop_button->setChecked(true);
+}
+
+void MainWindow::_set_controls_state(bool state) {
 	_ui->plot->setEnabled(state);
 	_ui->play_button->setEnabled(state);
 	_ui->stop_button->setEnabled(state);
@@ -124,6 +154,7 @@ void MainWindow::_set_all_enabled(bool state) {
 	_ui->pitch_slider->setEnabled(state);
 	_ui->tempo_slider->setEnabled(state);
 	_ui->plot_scrollbar->setEnabled(state);
+	_ui->menu_export->setEnabled(state);
 }
 
 } /* namespace cb */
