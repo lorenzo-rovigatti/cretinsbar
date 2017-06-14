@@ -5,6 +5,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CRETINSBAR_VERSION 0)
 
 option(G "Set to ON to compile with optimisations and debug symbols" OFF)
+option(NOMP3 "Set to ON to compile without mp3 support" OFF)
 
 if(G)
 	set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -44,14 +45,14 @@ set(LIBRARIES
 	${SOUNDTOUCH_LIBRARIES}
 )
 
-if(MPG123_FOUND)
-	message(STATUS "mpg123 found: enabling mp3 support")
+if(MPG123_FOUND AND NOT NOMP3)
+	message(STATUS "Enabling mp3 support")
 	set(LIBRARIES
 		${LIBRARIES}
 		${MPG123_LIBRARIES}
 	)
 else()
-	message(STATUS "mpg123 not found: disabling mp3 support")
+	message(STATUS "Disabling mp3 support")
 	add_definitions(-DNOMP3)
 endif()
 
