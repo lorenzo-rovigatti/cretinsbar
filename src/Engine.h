@@ -44,6 +44,7 @@ public:
 	bool is_ready();
 
 	void export_all(QString filename);
+	void export_selection(QString filename);
 
 public slots:
 	void play(qreal tempo_change, int pitch_change);

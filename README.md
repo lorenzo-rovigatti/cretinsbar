@@ -27,6 +27,7 @@ If the compilation is successful, the cretinsbar executable will be placed in th
 
 ## Tentative roadmap
 * Add save/load facilities
+* Add exception management
 * Add support for more formats
 
 ## Acknowledgements

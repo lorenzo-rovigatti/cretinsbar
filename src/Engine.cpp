@@ -158,6 +158,22 @@ void Engine::export_all(QString filename) {
 	}
 }
 
+void Engine::export_selection(QString filename) {
+	if(_start_from_time > _end_at_time) throw QString("Invalid selection");
+
+	QString extension = QFileInfo(filename).completeSuffix();
+	if(extension == "wav") {
+		Wave selection_wave = Wave((int) _out_file->get_channels(), _out_file->get_samples_per_sec(), _out_file->get_bits_per_sample());
+
+		qint64 first_byte = _out_file->bytes_from_us(_from_original_to_real_time(_start_from_time));
+		qint64 last_byte = _out_file->bytes_from_us(_from_original_to_real_time(_end_at_time));
+		qint64 byte_size = last_byte - first_byte;
+		selection_wave.append_samples(_out_file->data()->data() + first_byte, byte_size);
+
+		selection_wave.save(filename);
+	}
+}
+
 void Engine::_reset() {
 	if(is_ready()) {
 		_audio_output->stop();

@@ -27,6 +27,7 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 
 	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_on_open);
 	connect(_ui->action_export_all, &QAction::triggered, this, &MainWindow::_export_all);
+	connect(_ui->action_export_selection, &QAction::triggered, this, &MainWindow::_export_selection);
 
 	connect(_engine, &Engine::play_position_changed, _plot, &WaveForm::update_play_position);
 
@@ -83,6 +84,11 @@ void MainWindow::_on_open() {
 void MainWindow::_export_all() {
 	QString filename = QFileDialog::getSaveFileName(this, tr("Export as"), "", _supported_files_filter());
 	if(filename.size() > 0) _engine->export_all(filename);
+}
+
+void MainWindow::_export_selection() {
+	QString filename = QFileDialog::getSaveFileName(this, tr("Export as"), "", _supported_files_filter());
+	if(filename.size() > 0) _engine->export_selection(filename);
 }
 
 void MainWindow::_toggle_play(bool s) {
