@@ -12,16 +12,14 @@
 #include "../SoundUtils/SoundUtils.h"
 #include "WaveForm.h"
 
+#include <QMessageBox>
 #include <QStringList>
 #include <QAudioFormat>
 
 namespace cb {
 
 MainWindow::MainWindow(Engine *engine, QWidget *parent) :
-				QMainWindow(parent),
-				_pos_layer("play_position"),
-				_engine(engine),
-				_ui(new Ui::MainWindow) {
+		QMainWindow(parent), _pos_layer("play_position"), _engine(engine), _ui(new Ui::MainWindow) {
 	_ui->setupUi(this);
 	_init_plot();
 
@@ -58,8 +56,13 @@ void MainWindow::load_in_engine(QString filename) {
 	this->setEnabled(false);
 	_reset_controls();
 
-	_engine->load(filename);
-	_plot->load_wave(_engine);
+	try {
+		_engine->load(filename);
+		_plot->load_wave(_engine);
+	}
+	catch(std::exception &e) {
+		_show_critical(tr("Loading failed"), QString(e.what()));
+	}
 
 	this->setEnabled(true);
 	_set_controls_state(true);
@@ -82,13 +85,30 @@ void MainWindow::_on_open() {
 }
 
 void MainWindow::_export_all() {
-	QString filename = QFileDialog::getSaveFileName(this, tr("Export as"), "", _supported_files_filter());
-	if(filename.size() > 0) _engine->export_all(filename);
+	_export(ALL);
 }
 
 void MainWindow::_export_selection() {
+	_export(SELECTION);
+}
+
+void MainWindow::_export(export_type t) {
 	QString filename = QFileDialog::getSaveFileName(this, tr("Export as"), "", _supported_files_filter());
-	if(filename.size() > 0) _engine->export_selection(filename);
+	if(filename.size() > 0) {
+		try {
+			switch(t) {
+			case ALL:
+				_engine->export_all(filename);
+				break;
+			case SELECTION:
+				_engine->export_selection(filename);
+				break;
+			}
+		}
+		catch(std::exception &e) {
+			_show_critical(tr("Loading failed"), QString(e.what()));
+		}
+	}
 }
 
 void MainWindow::_toggle_play(bool s) {
@@ -109,8 +129,8 @@ void MainWindow::_stop() {
 
 void MainWindow::_plot_on_mouse_release(QMouseEvent *event) {
 	pair_qreal pq = _plot->selection_boundaries();
-	qint64 start_us = pq.first*1000000;
-	qint64 end_us = pq.second*1000000;
+	qint64 start_us = pq.first * 1000000;
+	qint64 end_us = pq.second * 1000000;
 
 	_engine->set_boundaries(start_us, end_us);
 }
@@ -161,6 +181,10 @@ void MainWindow::_set_controls_state(bool state) {
 	_ui->tempo_slider->setEnabled(state);
 	_ui->plot_scrollbar->setEnabled(state);
 	_ui->menu_export->setEnabled(state);
+}
+
+void MainWindow::_show_critical(const QString &title, const QString &msg) {
+	QMessageBox::critical(this, title, msg);
 }
 
 } /* namespace cb */

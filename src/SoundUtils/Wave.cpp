@@ -39,11 +39,11 @@ Wave::Wave(const QString &filename) throw (std::exception) {
 	}
 
 	if(_fmt.wFormatTag != 1) {
-		throw std::runtime_error("Only wav files with format tag == 1 are supported");
+		throw std::runtime_error("Unsupported format: only wav files with format tag == 1 are supported");
 	}
 
 	if(get_bytes_per_sample() != 2) {
-		throw std::runtime_error("Only 16 bit wav files are currently supported");
+		throw std::runtime_error("Unsupported format: only 16 bit wav files are currently supported");
 	}
 
 	file.read(reinterpret_cast<char*>(&_data.dataID), 4);

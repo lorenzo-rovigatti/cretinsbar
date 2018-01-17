@@ -63,6 +63,12 @@ private:
 	void _reset_controls();
 	void _set_controls_state(bool state);
 	static QString _supported_files_filter();
+	enum export_type {
+		ALL,
+		SELECTION
+	};
+	void _export(export_type t);
+	void _show_critical(const QString &title, const QString &msg);
 };
 
 } /* namespace cb */

@@ -79,6 +79,7 @@ void Engine::load(const QString &filename) {
 	_reset();
 
 	QString extension = QFileInfo(filename).completeSuffix();
+
 	if(extension == "wav") _load_wave(filename);
 #ifndef NOMP3
 	else if(extension == "mp3") _load_mp3(filename);
@@ -156,10 +157,14 @@ void Engine::export_all(QString filename) {
 	if(extension == "wav") {
 		_out_file->save(filename);
 	}
+	else {
+		QString error = QString("Unsupported file extension '%1'").arg(extension);
+		throw std::runtime_error(error.toStdString());
+	}
 }
 
 void Engine::export_selection(QString filename) {
-	if(_start_from_time > _end_at_time) throw QString("Invalid selection");
+	if(_start_from_time > _end_at_time) throw std::runtime_error("Invalid selection");
 
 	QString extension = QFileInfo(filename).completeSuffix();
 	if(extension == "wav") {
@@ -171,6 +176,10 @@ void Engine::export_selection(QString filename) {
 		selection_wave.append_samples(_out_file->data()->data() + first_byte, byte_size);
 
 		selection_wave.save(filename);
+	}
+	else {
+		QString error = QString("Unsupported file extension '%1'").arg(extension);
+		throw std::runtime_error(error.toStdString());
 	}
 }
 

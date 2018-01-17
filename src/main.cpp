@@ -45,6 +45,4 @@ int main(int argc, char *argv[]) {
 
 	cb::CretinsBar app(argc, argv);
 	return app.exec();
-
-	return 0;
 }
