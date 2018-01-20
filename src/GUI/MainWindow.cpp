@@ -23,9 +23,11 @@ MainWindow::MainWindow(Engine *engine, QWidget *parent) :
 	_ui->setupUi(this);
 	_init_plot();
 
+	// Menu actions
 	connect(_ui->action_open, &QAction::triggered, this, &MainWindow::_on_open);
 	connect(_ui->action_export_all, &QAction::triggered, this, &MainWindow::_export_all);
 	connect(_ui->action_export_selection, &QAction::triggered, this, &MainWindow::_export_selection);
+	connect(_ui->action_about, &QAction::triggered, this, &MainWindow::_about);
 
 	connect(_engine, &Engine::play_position_changed, _plot, &WaveForm::update_play_position);
 
@@ -109,6 +111,13 @@ void MainWindow::_export(export_type t) {
 			_show_critical(tr("Loading failed"), QString(e.what()));
 		}
 	}
+}
+
+void MainWindow::_about() {
+	QString text = tr("Cretin's Bar %1\n\n"
+			"by\nLorenzo Rovigatti\n(lorenzo.rovigatti@gmail.com)\n\n"
+			"(c) 2017-2018").arg(CRETINSBAR_VERSION);
+	QMessageBox::about(this, tr("About Cretin's Bar"), text);
 }
 
 void MainWindow::_toggle_play(bool s) {

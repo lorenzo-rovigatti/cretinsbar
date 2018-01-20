@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(cretinsbar)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set(CRETINSBAR_VERSION 0)
+set(CRETINSBAR_VERSION 0.1)
 
 option(G "Set to ON to compile with optimisations and debug symbols" OFF)
 option(NOMP3 "Set to ON to compile without mp3 support" OFF)

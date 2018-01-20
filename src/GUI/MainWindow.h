@@ -39,6 +39,7 @@ private slots:
 	void _on_open();
 	void _export_all();
 	void _export_selection();
+	void _about();
 
 	void _toggle_play(bool s);
 	void _stop();

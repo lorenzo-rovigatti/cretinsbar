@@ -30,6 +30,9 @@
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtWidgets"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtGui"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1381540595" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="CRETINSBAR_VERSION=0.1"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1421135259" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1783729329" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -85,6 +88,9 @@
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtGui"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtWidgets"/>
 									<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu/qt5/QtMultimedia"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1618159933" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="CRETINSBAR_VERSION=0.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.431797995" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
