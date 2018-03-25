@@ -12,6 +12,7 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QAudioFormat>
+#include <cmath>
 
 namespace cb {
 
